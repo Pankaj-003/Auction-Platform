@@ -1,0 +1,78 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+ 
+.Nav-ul li{
+    /* border: 1px solid red; */
+    color: rgb(18, 18, 19);
+    padding: 0px 10px;
+    /* background-color: salmon; */
+    /* font-style: ; */
+}
+/* Custom Navbar Styles */
+.custom-navbar {
+    background: rgba(0, 123, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Brand Title */
+  .brand-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Navbar Links */
+  .navbar-nav .nav-link {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: white !important;
+    margin-right: 20px;
+    transition: color 0.3s ease-in-out;
+  }
+  
+  .navbar-nav .nav-link:hover {
+    color: #ffdd57 !important;
+  }
+  
+  /* Login & Logout Buttons */
+  .login-btn, .logout-btn {
+    padding: 8px 18px;
+    font-size: 1rem;
+    border-radius: 20px;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .login-btn {
+    background: white;
+    color: #007bff;
+    border: 1px solid #007bff;
+  }
+  
+  .login-btn:hover {
+    background: #007bff;
+    color: white;
+  }
+  
+  .logout-btn {
+    background: #ff4d4d;
+    color: white;
+  }
+  
+  .logout-btn:hover {
+    background: #e60000;
+  }
+  
+  /* Mobile Navbar Button */
+  .custom-toggler {
+    border: none;
+    outline: none;
+  }
+  
+  .custom-toggler:focus {
+    box-shadow: none;
+  }
+  
