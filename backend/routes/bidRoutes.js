@@ -1,36 +1,82 @@
 import express from "express";
+import mongoose from "mongoose";
 import Bid from "../models/Bid.js";
-import AuctionItem from "../models/AuctionItem.js";
+import Auction from "../models/Auction.js";
 
 const router = express.Router();
 
-// POST: Place a bid
-router.post("/:auctionItemId", async (req, res) => {
-  const { auctionItemId } = req.params;
-  const { userId, amount } = req.body;
+// POST a new bid
+router.post("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { auctionId, amount } = req.body;
 
-  // Check if auction item exists
-  const auctionItem = await AuctionItem.findById(auctionItemId);
-  if (!auctionItem) {
-    return res.status(404).json({ message: "Auction item not found" });
+    // Validate amount
+    if (!amount || isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ message: "Bid amount must be a positive number" });
+    }
+
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(auctionId)) {
+      return res.status(400).json({ message: "Invalid userId or auctionId" });
+    }
+
+    // Check if auction exists
+    const auction = await Auction.findById(auctionId);
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    // Prevent duplicate bid
+    const existingBid = await Bid.findOne({ userId, auctionId });
+    if (existingBid) {
+      return res.status(400).json({ message: "You have already placed a bid on this auction" });
+    }
+
+    // Get highest bid
+    const highestBid = await Bid.findOne({ auctionId }).sort({ amount: -1 });
+    const highestAmount = highestBid ? highestBid.amount : 0;
+
+    // Compare bids
+    if (amount <= highestAmount) {
+      return res.status(400).json({
+        message: `Your bid must be higher than the current highest bid of $${highestAmount}`,
+      });
+    }
+
+    if (amount <= auction.startingBid) {
+      return res.status(400).json({
+        message: `Your bid must be higher than the starting bid of $${auction.startingBid}`,
+      });
+    }
+
+    // Save bid
+    const newBid = new Bid({ userId, auctionId, amount });
+    await newBid.save();
+
+    return res.status(201).json(newBid);
+  } catch (err) {
+    return res.status(500).json({ message: "Server error while placing bid", error: err.message });
   }
+});
 
-  // Check if bid is higher than current bid
-  const currentHighestBid = await Bid.findOne({ auctionItemId }).sort({ amount: -1 });
-  if (amount <= (currentHighestBid ? currentHighestBid.amount : auctionItem.startingBid)) {
-    return res.status(400).json({ message: "Your bid must be higher than the current highest bid." });
+// GET bids by userId
+router.get("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    const bids = await Bid.find({ userId }).populate("auctionId");
+
+    console.log("Fetched bids for user:", userId, "→", bids.length); // Debugging line
+
+    return res.status(200).json(bids);
+  } catch (err) {
+    return res.status(500).json({ message: "Server error while fetching bids", error: err.message });
   }
-
-  // Create a new bid
-  const newBid = new Bid({
-    userId,
-    auctionItemId,
-    amount,
-  });
-
-  await newBid.save();
-
-  res.status(201).json({ message: "Bid placed successfully", bid: newBid });
 });
 
 export default router;
