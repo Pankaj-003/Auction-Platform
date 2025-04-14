@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "animate.css";
 import "../Auction.css";
+import { toast, ToastContainer } from "react-toastify";  // Import Toastify components
+import "react-toastify/dist/ReactToastify.css";
 
 const Auction = () => {
   const [auctionItems, setAuctionItems] = useState([]);
@@ -46,15 +48,18 @@ const Auction = () => {
   };
 
   const handlePlaceBid = async (auctionId, startingBid) => {
-    if (!userId) return alert("❌ Please log in to place a bid");
+    if (!userId) {
+      toast.error("❌ Please log in to place a bid");
+      return;
+    }
 
     const amount = bidAmounts[auctionId];
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
-      alert("❌ Enter a valid bid amount");
+      toast.error("❌ Enter a valid bid amount");
       return;
     }
     if (Number(amount) <= startingBid) {
-      alert("❌ Your bid must be higher than the starting bid");
+      toast.error("❌ Your bid must be higher than the starting bid");
       return;
     }
 
@@ -63,8 +68,8 @@ const Auction = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          auctionId,  // Correct: auctionId in the body
-          amount,     // Correct: amount in the body
+          auctionId, // Correct: auctionId in the body
+          amount, // Correct: amount in the body
         }),
       });
 
@@ -72,13 +77,13 @@ const Auction = () => {
 
       if (res.ok) {
         setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
-        alert("✅ Bid placed successfully");
+        toast.success("✅ Bid placed successfully");
       } else {
-        alert(`❌ ${data.message || "Failed to place bid"}`);
+        toast.error(data.message || "❌ Failed to place bid");
       }
     } catch (err) {
       console.error("Bid Error:", err);
-      alert("❌ Error placing bid");
+      toast.error("❌ Error placing bid");
     }
   };
 
@@ -125,10 +130,23 @@ const Auction = () => {
                   </h5>
                   <p className="text-secondary mb-1">{item.description}</p>
                   <p>
-                    <strong>Starting Bid:</strong> ${item.startingBid}
+                    <strong>Starting Bid:</strong> ₹ {item.startingBid}
                   </p>
                   <p className="text-danger fw-semibold">
                     ⌛ {getTimeRemaining(item.endTime)}
+                  </p>
+
+                  {/* Current Highest Bid Display with Username */}
+                  <p className="text-success fw-semibold">
+                    <strong>Current Highest Bid: </strong> ₹{" "}
+                    {item.highestBid || "No bids yet"}
+                    {item.highestBidder && item.highestBidder.name && (
+                      <>
+                        <br />
+                        <strong>By: </strong>
+                        {item.highestBidder.name}
+                      </>
+                    )}
                   </p>
 
                   <div className="d-flex mt-3 align-items-center gap-2">
@@ -161,6 +179,9 @@ const Auction = () => {
           ))}
         </div>
       )}
+
+      {/* Add ToastContainer to render notifications */}
+      <ToastContainer position="top-center" autoClose={5000} />
     </div>
   );
 };

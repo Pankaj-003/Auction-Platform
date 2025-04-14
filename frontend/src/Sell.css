@@ -1,4 +1,15 @@
 /* Sell Form Styling */
+/* Remove spinner buttons for input[type=number] */
+/* input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+} */
+
 .sell-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(8px);

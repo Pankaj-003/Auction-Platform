@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import "../index.css"
+import "../index.css";
+
 const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
   const handleLogout = () => {
     localStorage.removeItem("userId");
@@ -24,21 +25,37 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
         </button>
 
         <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul className="navbar-nav">
-            <li className="nav-item"><Link className="nav-link" to="/">Auctions</Link></li>
-            <li className="nav-item"><Link className="nav-link" to="/sell">Sell</Link></li>
-            <li className="nav-item"><Link className="nav-link" to="/contact">Contact</Link></li>
+          <ul className="navbar-nav align-items-center">
+            <li className="nav-item">
+              <Link className="nav-link" to="/">Auctions</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/sell">Sell</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/contact">Contact</Link>
+            </li>
 
-            {/* Only show "My Bids" if logged in */}
             {isAuthenticated && (
-              <li className="nav-item"><Link className="nav-link" to="/mybids">My Bids</Link></li>
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/mybids">My Bids</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/winners">Winners</Link>
+                </li>
+              </>
             )}
 
-            <li className="nav-item">
+            <li className="nav-item ms-2">
               {isAuthenticated ? (
-                <button className="btn btn-danger logout-btn" onClick={handleLogout}>Logout</button>
+                <button className="btn btn-danger logout-btn" onClick={handleLogout}>
+                  Logout
+                </button>
               ) : (
-                <Link className="btn btn-light login-btn" to="/signin">Login</Link>
+                <Link className="btn btn-light login-btn" to="/signin">
+                  Login
+                </Link>
               )}
             </li>
           </ul>
