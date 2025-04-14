@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "animate.css";
 import "../Auction.css";
-import { toast, ToastContainer } from "react-toastify";  // Import Toastify components
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Auction = () => {
@@ -135,6 +135,14 @@ const Auction = () => {
                   <p className="text-danger fw-semibold">
                     ⌛ {getTimeRemaining(item.endTime)}
                   </p>
+
+                  {/* Show Winner if Auction Ended */}
+                  {item.winner && (
+                    <p className="text-success fw-semibold">
+                      <strong>Auction Winner: </strong>
+                      {item.winner.name}
+                    </p>
+                  )}
 
                   {/* Current Highest Bid Display with Username */}
                   <p className="text-success fw-semibold">

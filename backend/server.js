@@ -2,12 +2,16 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import http from "http";  // Import http module
+import nodemailer from "nodemailer";  // Import nodemailer
 
 import authRoutes from "./routes/authRoutes.js";
 import auctionRoutes from "./routes/auctionRoutes.js";
 import bidRoutes from "./routes/bidRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-
+// import auctionScheduler from 'auctionScheduler.js'; 
+//  // Import the auction scheduler
+import auctionScheduler from "./routes/auctionScheduler.js"; // Import the auction scheduler
 dotenv.config();
 
 const app = express();
@@ -42,4 +46,36 @@ app.use("/api/users", userRoutes);
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+// Run the auction scheduler
+auctionScheduler();
+
+// Email Notification for auction end
+const server = http.createServer((request, response) => {
+  const auth = nodemailer.createTransport({
+    service: 'gmail',
+    secure: true,
+    port: 465,
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD,
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: process.env.EMAIL,  // Recipient email (can be dynamic if needed)
+    subject: 'Auction Notification',
+    text: 'Your auction has ended. Please check your account for details.',
+  };
+
+  auth.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
+  response.end('Email sent!');
 });

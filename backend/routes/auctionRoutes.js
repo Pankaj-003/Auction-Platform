@@ -142,5 +142,17 @@ router.post("/declareWinner/:auctionId", async (req, res) => {
     return res.status(500).json({ error: "Server error while declaring winner" });
   }
 });
-
+// Fetch auction details along with the winner
+router.get('/:id', async (req, res) => {
+  try {
+    const auction = await Auction.findById(req.params.id).populate('winner');
+    if (!auction) {
+      return res.status(404).send('Auction not found');
+    }
+    res.json(auction);  // Send the auction data with the winner
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server error');
+  }
+});
 export default router;
