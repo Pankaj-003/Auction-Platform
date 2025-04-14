@@ -7,29 +7,16 @@ import "react-toastify/dist/ReactToastify.css";
 
 const Auction = () => {
   const [auctionItems, setAuctionItems] = useState([]);
+  const [selectedAuction, setSelectedAuction] = useState(null);
   const [bidAmounts, setBidAmounts] = useState({});
   const userId = localStorage.getItem("userId");
 
-  // Fetch auctions
   useEffect(() => {
     fetch("http://localhost:8000/api/auctions")
       .then((res) => res.json())
       .then((data) => setAuctionItems(data))
       .catch((err) => console.error("Error fetching auctions:", err));
   }, []);
-
-  // Update time remaining for each auction
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAuctionItems((prevItems) =>
-        prevItems.map((item) => ({
-          ...item,
-          timeRemaining: getTimeRemaining(item.endTime),
-        }))
-      );
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [auctionItems]);
 
   const getTimeRemaining = (endTime) => {
     const now = new Date().getTime();
@@ -67,17 +54,14 @@ const Auction = () => {
       const res = await fetch(`http://localhost:8000/api/bids/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          auctionId, // Correct: auctionId in the body
-          amount, // Correct: amount in the body
-        }),
+        body: JSON.stringify({ auctionId, amount }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
         toast.success("✅ Bid placed successfully");
+        setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
       } else {
         toast.error(data.message || "❌ Failed to place bid");
       }
@@ -87,100 +71,153 @@ const Auction = () => {
     }
   };
 
-  // Poll auctions for updates every few seconds
-  useEffect(() => {
-    const fetchAuctions = async () => {
-      const res = await fetch("http://localhost:8000/api/auctions");
-      const data = await res.json();
-      setAuctionItems(data);
-    };
-
-    fetchAuctions();
-    const interval = setInterval(fetchAuctions, 5000); // every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
+  const handleCardClick = (auction) => setSelectedAuction(auction);
+  const handleBack = () => setSelectedAuction(null);
 
   return (
     <div className="container py-5">
-      <h2 className="text-center fw-bold mb-5 animate__animated animate__fadeInDown">
+      <h2 className="text-center fw-bold mb-5 animate__animated animate__fadeInDown text-primary">
         🔥 Live Auctions
       </h2>
 
-      {auctionItems.length === 0 ? (
+      {selectedAuction ? (
+        <div className="row justify-content-center animate__animated animate__fadeIn">
+          <div className="col-lg-8">
+            <div
+              className="card p-5 shadow-lg border-0 rounded-5"
+              style={{
+                background: "#fdfdfd",
+                boxShadow: "0 20px 30px rgba(0,0,0,0.1)",
+              }}
+            >
+              <button
+                className="btn btn-light mb-4 shadow-sm"
+                onClick={handleBack}
+                style={{
+                  borderRadius: "50px",
+                  fontWeight: "bold",
+                  padding: "10px 20px",
+                  boxShadow: "inset 0px 2px 5px rgba(0,0,0,0.05)",
+                }}
+              >
+                ← Back to all auctions
+              </button>
+
+              <div
+                className="rounded-4 mb-4"
+                style={{
+                  height: "400px",
+                  backgroundImage: `url(${selectedAuction.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  borderRadius: "20px",
+                }}
+              ></div>
+
+              <h3 className="fw-bold text-dark">{selectedAuction.title}</h3>
+              <p className="lead text-muted">{selectedAuction.description}</p>
+              <p className="fs-5">
+                <strong>Starting Bid:</strong> ₹ {selectedAuction.startingBid}
+              </p>
+              <p className="text-danger fw-semibold fs-5">
+                ⏳ {getTimeRemaining(selectedAuction.endTime)}
+              </p>
+
+              {selectedAuction.winner && (
+                <p className="text-success fw-semibold fs-5">
+                  🏆 Winner: {selectedAuction.winner.name}
+                </p>
+              )}
+
+              <p className="text-success fw-semibold fs-5">
+                <strong>Current Highest Bid:</strong> ₹{" "}
+                {selectedAuction.highestBid || "No bids yet"}
+                {selectedAuction.highestBidder?.name && (
+                  <>
+                    <br />
+                    <strong>By:</strong> {selectedAuction.highestBidder.name}
+                  </>
+                )}
+              </p>
+
+              <div className="d-flex mt-4 gap-3 align-items-center">
+                <input
+                  type="number"
+                  className="form-control border rounded-pill px-4 py-2 shadow-sm"
+                  placeholder="Enter your bid"
+                  value={bidAmounts[selectedAuction._id] || ""}
+                  onChange={(e) =>
+                    handleBidChange(e, selectedAuction._id)
+                  }
+                  disabled={!userId}
+                  style={{ maxWidth: "200px" }}
+                />
+                <button
+                  className="btn btn-success px-4 py-2 rounded-pill fw-semibold shadow"
+                  onClick={() =>
+                    handlePlaceBid(
+                      selectedAuction._id,
+                      selectedAuction.startingBid
+                    )
+                  }
+                  disabled={!userId}
+                >
+                  💸 Place Bid
+                </button>
+              </div>
+
+              {!userId && (
+                <p className="text-muted mt-3">
+                  🔒 Please log in to place a bid
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : auctionItems.length === 0 ? (
         <h5 className="text-center text-muted">No auctions available</h5>
       ) : (
-        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           {auctionItems.map((item) => (
             <div key={item._id} className="col">
-              <div className="card h-100 shadow-lg border-0 rounded-4 auction-card animate__animated animate__zoomIn">
+              <div
+                className="card h-100 shadow border-0 rounded-4 auction-card animate__animated animate__zoomIn"
+                onClick={() => handleCardClick(item)}
+                style={{
+                  cursor: "pointer",
+                  transition: "transform 0.3s ease",
+                }}
+              >
                 <div
-                  className="auction-image position-relative overflow-hidden"
                   style={{
                     height: "220px",
                     backgroundImage: `url(${item.image})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
-                    borderTopLeftRadius: "1rem",
-                    borderTopRightRadius: "1rem",
+                    borderTopLeftRadius: "1.5rem",
+                    borderTopRightRadius: "1.5rem",
                   }}
                 ></div>
                 <div className="card-body p-4">
-                  <h5 className="card-title fw-semibold text-primary">
+                  <h5 className="card-title fw-bold text-primary">
                     {item.title}
                   </h5>
-                  <p className="text-secondary mb-1">{item.description}</p>
+                  <p className="text-muted">{item.description}</p>
                   <p>
                     <strong>Starting Bid:</strong> ₹ {item.startingBid}
                   </p>
                   <p className="text-danger fw-semibold">
                     ⌛ {getTimeRemaining(item.endTime)}
                   </p>
-
-                  {/* Show Winner if Auction Ended */}
-                  {item.winner && (
-                    <p className="text-success fw-semibold">
-                      <strong>Auction Winner: </strong>
-                      {item.winner.name}
-                    </p>
-                  )}
-
-                  {/* Current Highest Bid Display with Username */}
                   <p className="text-success fw-semibold">
-                    <strong>Current Highest Bid: </strong> ₹{" "}
-                    {item.highestBid || "No bids yet"}
-                    {item.highestBidder && item.highestBidder.name && (
+                    <strong>Highest Bid:</strong> ₹ {item.highestBid || 0}
+                    {item.highestBidder?.name && (
                       <>
                         <br />
-                        <strong>By: </strong>
-                        {item.highestBidder.name}
+                        <strong>By:</strong> {item.highestBidder.name}
                       </>
                     )}
                   </p>
-
-                  <div className="d-flex mt-3 align-items-center gap-2">
-                    <input
-                      type="number"
-                      className="form-control px-3 py-2 border shadow-sm bid-input"
-                      placeholder="Enter bid"
-                      value={bidAmounts[item._id] || ""}
-                      onChange={(e) => handleBidChange(e, item._id)}
-                      disabled={!userId}
-                    />
-                    <button
-                      className="btn btn-success bid-button"
-                      style={{ height: "38px" }}
-                      onClick={() => handlePlaceBid(item._id, item.startingBid)}
-                      disabled={!userId}
-                    >
-                      Bid
-                    </button>
-                  </div>
-
-                  {!userId && (
-                    <p className="text-muted mt-2">
-                      🔒 Please log in to place a bid
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -188,7 +225,6 @@ const Auction = () => {
         </div>
       )}
 
-      {/* Add ToastContainer to render notifications */}
       <ToastContainer position="top-center" autoClose={5000} />
     </div>
   );
