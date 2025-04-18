@@ -7,8 +7,8 @@ import Sell from "./components/Sell";
 import Signin from "./components/Signin";
 import Signup from "./components/Signup";
 import Contact from "./components/Contact";
-import MyBids from "./components/MyBids"; // 👈
-import Winners from "./components/winners"; // 👈
+import MyBids from "./components/MyBids";
+import Winners from "./components/winners";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,20 +20,22 @@ const App = () => {
 
   return (
     <Router>
-      <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
-      <Routes>
-        <Route path="/" element={<Auction />} />
-        <Route path="/sell" element={<Sell />} />
-        <Route path="/signin" element={<Signin setIsAuthenticated={setIsAuthenticated} />} />
-        <Route path="/signup" element={<Signup setIsAuthenticated={setIsAuthenticated} />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/mybids" element={<MyBids />} />
-        <Route path="/winners" element={<Winners />} /> {/* 👈 */}
-        {/* <Route path="/winners" element={<Winners />} />
-         */}
-         {/* <Route path="/winners" element={<Winners/>}/> */}
-      </Routes>
-      <Footer />
+      {/* Wrapping everything in a flex-column container */}
+      <div className="app-container">
+        <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+        <div className="content">
+          <Routes>
+            <Route path="/" element={<Auction />} />
+            <Route path="/sell" element={<Sell />} />
+            <Route path="/signin" element={<Signin setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/signup" element={<Signup setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/mybids" element={<MyBids />} />
+            <Route path="/winners" element={<Winners />} />
+          </Routes>
+        </div>
+        <Footer />
+      </div>
     </Router>
   );
 };

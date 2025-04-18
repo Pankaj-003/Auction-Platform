@@ -18,6 +18,8 @@ input[type=number] {
     padding: 20px;
     max-width: 600px;
     margin: 0 auto;
+    margin-bottom: 40px;
+    
   }
   
   /* Heading */
