@@ -64,7 +64,7 @@ function MyBids() {
                     {bid.auctionId?.title || "Auction Deleted"}
                   </h6>
                   <p className="card-text mb-1 small">
-                    <strong>Bid:</strong> ${bid.amount}
+                    <strong>Bid:</strong> ₹ {bid.amount}
                   </p>
                   {bid.auctionId?.description && (
                     <p className="card-text text-muted small mb-0">

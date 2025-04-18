@@ -41,9 +41,9 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/mybids">My Bids</Link>
                 </li>
-                <li className="nav-item">
+                {/* <li className="nav-item">
                   <Link className="nav-link" to="/winners">Winners</Link>
-                </li>
+                </li> */}
               </>
             )}
 

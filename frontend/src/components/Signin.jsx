@@ -23,7 +23,19 @@ const Signin = ({ setIsAuthenticated }) => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("userId", data.userId); // Store user ID in local storage
+        // ✅ Store full user data in localStorage
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            userId: data.userId,
+            name: data.name,
+            email: data.email,
+          })
+        );
+
+        // ✅ Also store just userId separately for Contact page use
+        localStorage.setItem("userId", data.userId); // <-- 🔥 Add this line
+
         setIsAuthenticated(true);
         navigate("/"); // Redirect to home page
       } else {
@@ -43,24 +55,24 @@ const Signin = ({ setIsAuthenticated }) => {
         <form onSubmit={handleSignin}>
           <div className="mb-3">
             <label className="form-label">Email</label>
-            <input 
-              type="email" 
-              className="form-control" 
-              placeholder="Enter email" 
+            <input
+              type="email"
+              className="form-control"
+              placeholder="Enter email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required 
+              required
             />
           </div>
           <div className="mb-3">
             <label className="form-label">Password</label>
-            <input 
-              type="password" 
-              className="form-control" 
-              placeholder="Enter password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
           {error && <p className="text-danger">{error}</p>}

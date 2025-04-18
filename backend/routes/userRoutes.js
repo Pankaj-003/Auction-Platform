@@ -7,7 +7,7 @@ import Bid from "../models/Bid.js"; // ✅ correct if Bid.js is in models/
 
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id).select("name email");
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.status(200).json(user);
   } catch (error) {

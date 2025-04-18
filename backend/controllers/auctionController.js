@@ -159,3 +159,9 @@ export const placeBid = async (req, res) => {
     res.status(500).json({ error: "Failed to place bid" });
   }
 };
+// controllers/auctionController.js or route
+Auction.find()
+  .populate("highestBidder", "name")
+  .populate("winner", "name")
+  .then((auctions) => res.json(auctions))
+  .catch((err) => res.status(500).json({ error: err.message }));

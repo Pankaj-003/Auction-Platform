@@ -8,7 +8,7 @@ import Signin from "./components/Signin";
 import Signup from "./components/Signup";
 import Contact from "./components/Contact";
 import MyBids from "./components/MyBids"; // 👈
-import Winners from "./components/winners";
+// import Winners from "./components/winners";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,7 +30,7 @@ const App = () => {
         <Route path="/mybids" element={<MyBids />} />
         {/* <Route path="/winners" element={<Winners />} />
          */}
-         <Route path="/winners" element={<Winners/>}/>
+         {/* <Route path="/winners" element={<Winners/>}/> */}
       </Routes>
       <Footer />
     </Router>

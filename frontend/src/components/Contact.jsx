@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-// import './Contact.css';  // Import custom styles
 import "../contact.css";
+import { toast, ToastContainer } from "react-toastify"; // Correct import for both `toast` and `ToastContainer`
+import "react-toastify/dist/ReactToastify.css"; // Required CSS import
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +10,29 @@ const Contact = () => {
     email: "",
     message: "",
   });
-  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const userId = localStorage.getItem("userId");
+      if (!userId) return;
+
+      try {
+        const response = await fetch(`http://localhost:8000/api/users/${userId}`);
+        const data = await response.json();
+        if (response.ok) {
+          setFormData((prev) => ({
+            ...prev,
+            name: data.name,
+            email: data.email,
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -18,24 +41,40 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setSuccess(true);
+    const userId = localStorage.getItem("userId");
 
-    setFormData({
-      name: "",
-      email: "",
-      message: "",
-    });
+    // Check if user is logged in
+    if (!userId) {
+      toast.error("Please login to send a message.");
+      return;
+    }
 
-    setTimeout(() => setSuccess(false), 3000);
+    try {
+      const response = await fetch("http://localhost:8000/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setFormData({ ...formData, message: "" });
+        toast.success("Your message has been sent!");
+      } else {
+        toast.error("Failed to send message.");
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   return (
     <div className="container mt-5">
       <h2 className="text-center mb-4 contact-header">Contact Us</h2>
-      {success && <div className="alert alert-success">Your message has been sent!</div>}
       <div className="row justify-content-center">
         <div className="col-md-6">
           <div className="card p-4 shadow-lg custom-card">
@@ -83,6 +122,8 @@ const Contact = () => {
           </div>
         </div>
       </div>
+      {/* ToastContainer to display the toasts */}
+      <ToastContainer />
     </div>
   );
 };

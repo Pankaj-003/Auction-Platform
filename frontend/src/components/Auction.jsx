@@ -12,11 +12,17 @@ const Auction = () => {
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
+    fetchAuctions();
+    const interval = setInterval(fetchAuctions, 10000); // refresh every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchAuctions = () => {
     fetch("http://localhost:8000/api/auctions")
       .then((res) => res.json())
       .then((data) => setAuctionItems(data))
       .catch((err) => console.error("Error fetching auctions:", err));
-  }, []);
+  };
 
   const getTimeRemaining = (endTime) => {
     const now = new Date().getTime();
@@ -62,6 +68,7 @@ const Auction = () => {
       if (res.ok) {
         toast.success("✅ Bid placed successfully");
         setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
+        fetchAuctions(); // refresh data
       } else {
         toast.error(data.message || "❌ Failed to place bid");
       }
@@ -123,12 +130,6 @@ const Auction = () => {
                 ⏳ {getTimeRemaining(selectedAuction.endTime)}
               </p>
 
-              {selectedAuction.winner && (
-                <p className="text-success fw-semibold fs-5">
-                  🏆 Winner: {selectedAuction.winner.name}
-                </p>
-              )}
-
               <p className="text-success fw-semibold fs-5">
                 <strong>Current Highest Bid:</strong> ₹{" "}
                 {selectedAuction.highestBid || "No bids yet"}
@@ -139,6 +140,13 @@ const Auction = () => {
                   </>
                 )}
               </p>
+
+              {new Date(selectedAuction.endTime) < new Date() &&
+                selectedAuction.winner && (
+                  <p className="text-success fw-semibold fs-5">
+                    🏁 Final Winner: {selectedAuction.winner.name}
+                  </p>
+                )}
 
               <div className="d-flex mt-4 gap-3 align-items-center">
                 <input
@@ -215,6 +223,12 @@ const Auction = () => {
                       <>
                         <br />
                         <strong>By:</strong> {item.highestBidder.name}
+                      </>
+                    )}
+                    {new Date(item.endTime) < new Date() && item.winner && (
+                      <>
+                        <br />
+                        🏁 Final Winner: {item.winner.name}
                       </>
                     )}
                   </p>
