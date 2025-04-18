@@ -21,6 +21,7 @@ router.post("/:userId", async (req, res) => {
       return res.status(400).json({ message: "Invalid userId or auctionId" });
     }
 
+    // Find user and auction
     const user = await User.findById(userId);
     const auction = await Auction.findById(auctionId);
 
@@ -49,6 +50,7 @@ router.post("/:userId", async (req, res) => {
       });
     }
 
+    // Ensure bid is higher than starting bid
     if (amount <= auction.startingBid) {
       return res.status(400).json({
         message: `❌ Your bid must be higher than the starting bid of ₹${auction.startingBid}`,
@@ -82,7 +84,14 @@ router.get("/:userId", async (req, res) => {
       return res.status(400).json({ message: "Invalid user ID format" });
     }
 
-    const bids = await Bid.find({ userId }).populate("auctionId");
+    // Fetch bids placed by the user and populate auction details
+    const bids = await Bid.find({ userId })
+      .populate("auctionId", "title description startingBid endTime highestBid highestBidder isEnded") // Populate auction details
+      .populate("userId", "name email"); // Populate user details
+
+    if (!bids.length) {
+      return res.status(404).json({ message: "No bids found for this user" });
+    }
 
     return res.status(200).json(bids);
   } catch (err) {

@@ -1,27 +1,43 @@
 import React, { useState, useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "animate.css";
-import "../Auction.css";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Auction = () => {
   const [auctionItems, setAuctionItems] = useState([]);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [bidAmounts, setBidAmounts] = useState({});
+  const [countdowns, setCountdowns] = useState({});
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     fetchAuctions();
-    const interval = setInterval(fetchAuctions, 10000); // refresh every 10s
+    const interval = setInterval(() => {
+      fetchAuctions(); // Refresh auctions and countdowns every 10 seconds
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    // Set up live countdowns
+    const interval = setInterval(() => {
+      updateCountdowns();
+    }, 1000); // Update countdowns every second
+    return () => clearInterval(interval);
+  }, [auctionItems]);
 
   const fetchAuctions = () => {
     fetch("http://localhost:8000/api/auctions")
       .then((res) => res.json())
       .then((data) => setAuctionItems(data))
       .catch((err) => console.error("Error fetching auctions:", err));
+  };
+
+  const updateCountdowns = () => {
+    const newCountdowns = {};
+    auctionItems.forEach((item) => {
+      newCountdowns[item._id] = getTimeRemaining(item.endTime);
+    });
+    setCountdowns(newCountdowns);
   };
 
   const getTimeRemaining = (endTime) => {
@@ -81,6 +97,8 @@ const Auction = () => {
   const handleCardClick = (auction) => setSelectedAuction(auction);
   const handleBack = () => setSelectedAuction(null);
 
+  const isAuctionEnded = (endTime) => new Date(endTime) < new Date();
+
   return (
     <div className="container py-5">
       <h2 className="text-center fw-bold mb-5 animate__animated animate__fadeInDown text-primary">
@@ -127,52 +145,58 @@ const Auction = () => {
                 <strong>Starting Bid:</strong> ₹ {selectedAuction.startingBid}
               </p>
               <p className="text-danger fw-semibold fs-5">
-                ⏳ {getTimeRemaining(selectedAuction.endTime)}
+                ⏳ {countdowns[selectedAuction._id] || "Loading..."}
               </p>
 
-              <p className="text-success fw-semibold fs-5">
-                <strong>Current Highest Bid:</strong> ₹{" "}
-                {selectedAuction.highestBid || "No bids yet"}
-                {selectedAuction.highestBidder?.name && (
-                  <>
-                    <br />
-                    <strong>By:</strong> {selectedAuction.highestBidder.name}
-                  </>
-                )}
-              </p>
+              {selectedAuction.highestBid > selectedAuction.startingBid ? (
+                <p className="text-success fw-semibold fs-5">
+                  💰 Current Highest Bid: ₹ {selectedAuction.highestBid}
+                  <br />
+                  👤 By: {selectedAuction.highestBidder?.name || "Anonymous"}
+                </p>
+              ) : (
+                <p className="text-muted fw-semibold fs-5">
+                  ❌ No user bid on this item
+                </p>
+              )}
 
-              {new Date(selectedAuction.endTime) < new Date() &&
-                selectedAuction.winner && (
+              {new Date(selectedAuction.endTime) < new Date() ? (
+                selectedAuction.winner ? (
                   <p className="text-success fw-semibold fs-5">
                     🏁 Final Winner: {selectedAuction.winner.name}
                   </p>
-                )}
+                ) : (
+                  <p className="text-warning fw-semibold fs-5">
+                    🏁 Auction Ended. Winner not declared yet.
+                  </p>
+                )
+              ) : null}
 
-              <div className="d-flex mt-4 gap-3 align-items-center">
-                <input
-                  type="number"
-                  className="form-control border rounded-pill px-4 py-2 shadow-sm"
-                  placeholder="Enter your bid"
-                  value={bidAmounts[selectedAuction._id] || ""}
-                  onChange={(e) =>
-                    handleBidChange(e, selectedAuction._id)
-                  }
-                  disabled={!userId}
-                  style={{ maxWidth: "200px" }}
-                />
-                <button
-                  className="btn btn-success px-4 py-2 rounded-pill fw-semibold shadow"
-                  onClick={() =>
-                    handlePlaceBid(
-                      selectedAuction._id,
-                      selectedAuction.startingBid
-                    )
-                  }
-                  disabled={!userId}
-                >
-                  💸 Place Bid
-                </button>
-              </div>
+              {!isAuctionEnded(selectedAuction.endTime) && (
+                <div className="d-flex mt-4 gap-3 align-items-center">
+                  <input
+                    type="number"
+                    className="form-control border rounded-pill px-4 py-2 shadow-sm"
+                    placeholder="Enter your bid"
+                    value={bidAmounts[selectedAuction._id] || ""}
+                    onChange={(e) => handleBidChange(e, selectedAuction._id)}
+                    disabled={!userId}
+                    style={{ maxWidth: "200px" }}
+                  />
+                  <button
+                    className="btn btn-success px-4 py-2 rounded-pill fw-semibold shadow"
+                    onClick={() =>
+                      handlePlaceBid(
+                        selectedAuction._id,
+                        selectedAuction.startingBid
+                      )
+                    }
+                    disabled={!userId}
+                  >
+                    💸 Place Bid
+                  </button>
+                </div>
+              )}
 
               {!userId && (
                 <p className="text-muted mt-3">
@@ -215,23 +239,32 @@ const Auction = () => {
                     <strong>Starting Bid:</strong> ₹ {item.startingBid}
                   </p>
                   <p className="text-danger fw-semibold">
-                    ⌛ {getTimeRemaining(item.endTime)}
+                    ⌛ {countdowns[item._id] || "Loading..."}
                   </p>
-                  <p className="text-success fw-semibold">
-                    <strong>Highest Bid:</strong> ₹ {item.highestBid || 0}
-                    {item.highestBidder?.name && (
-                      <>
-                        <br />
-                        <strong>By:</strong> {item.highestBidder.name}
-                      </>
-                    )}
-                    {new Date(item.endTime) < new Date() && item.winner && (
-                      <>
-                        <br />
+
+                  {item.highestBid > item.startingBid ? (
+                    <p className="text-success fw-semibold">
+                      💰 Highest Bid: ₹ {item.highestBid}
+                      <br />
+                      👤 By: {item.highestBidder?.name || "Anonymous"}
+                    </p>
+                  ) : (
+                    <p className="text-muted fw-semibold">
+                      ❌ No user bid on this item
+                    </p>
+                  )}
+
+                  {new Date(item.endTime) < new Date() ? (
+                    item.winner ? (
+                      <p className="text-success fw-semibold">
                         🏁 Final Winner: {item.winner.name}
-                      </>
-                    )}
-                  </p>
+                      </p>
+                    ) : (
+                      <p className="text-warning fw-semibold">
+                        🏁 Auction Ended. Winner not declared yet.
+                      </p>
+                    )
+                  ) : null}
                 </div>
               </div>
             </div>
