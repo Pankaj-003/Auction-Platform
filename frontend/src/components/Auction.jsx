@@ -18,17 +18,21 @@ const Auction = () => {
   }, []);
 
   useEffect(() => {
-    // Set up live countdowns
     const interval = setInterval(() => {
       updateCountdowns();
-    }, 1000); // Update countdowns every second
+    }, 1000);
     return () => clearInterval(interval);
   }, [auctionItems]);
 
   const fetchAuctions = () => {
     fetch("http://localhost:8000/api/auctions")
       .then((res) => res.json())
-      .then((data) => setAuctionItems(data))
+      .then((data) => {
+        const liveAuctions = data.filter(
+          (item) => new Date(item.endTime) > new Date()
+        );
+        setAuctionItems(liveAuctions);
+      })
       .catch((err) => console.error("Error fetching auctions:", err));
   };
 
@@ -84,7 +88,7 @@ const Auction = () => {
       if (res.ok) {
         toast.success("✅ Bid placed successfully");
         setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
-        fetchAuctions(); // refresh data
+        fetchAuctions();
       } else {
         toast.error(data.message || "❌ Failed to place bid");
       }
@@ -96,8 +100,6 @@ const Auction = () => {
 
   const handleCardClick = (auction) => setSelectedAuction(auction);
   const handleBack = () => setSelectedAuction(null);
-
-  const isAuctionEnded = (endTime) => new Date(endTime) < new Date();
 
   return (
     <div className="container py-5">
@@ -160,43 +162,29 @@ const Auction = () => {
                 </p>
               )}
 
-              {new Date(selectedAuction.endTime) < new Date() ? (
-                selectedAuction.winner ? (
-                  <p className="text-success fw-semibold fs-5">
-                    🏁 Final Winner: {selectedAuction.winner.name}
-                  </p>
-                ) : (
-                  <p className="text-warning fw-semibold fs-5">
-                    🏁 Auction Ended. Winner not declared yet.
-                  </p>
-                )
-              ) : null}
-
-              {!isAuctionEnded(selectedAuction.endTime) && (
-                <div className="d-flex mt-4 gap-3 align-items-center">
-                  <input
-                    type="number"
-                    className="form-control border rounded-pill px-4 py-2 shadow-sm"
-                    placeholder="Enter your bid"
-                    value={bidAmounts[selectedAuction._id] || ""}
-                    onChange={(e) => handleBidChange(e, selectedAuction._id)}
-                    disabled={!userId}
-                    style={{ maxWidth: "200px" }}
-                  />
-                  <button
-                    className="btn btn-success px-4 py-2 rounded-pill fw-semibold shadow"
-                    onClick={() =>
-                      handlePlaceBid(
-                        selectedAuction._id,
-                        selectedAuction.startingBid
-                      )
-                    }
-                    disabled={!userId}
-                  >
-                    💸 Place Bid
-                  </button>
-                </div>
-              )}
+              <div className="d-flex mt-4 gap-3 align-items-center">
+                <input
+                  type="number"
+                  className="form-control border rounded-pill px-4 py-2 shadow-sm"
+                  placeholder="Enter your bid"
+                  value={bidAmounts[selectedAuction._id] || ""}
+                  onChange={(e) => handleBidChange(e, selectedAuction._id)}
+                  disabled={!userId}
+                  style={{ maxWidth: "200px" }}
+                />
+                <button
+                  className="btn btn-success px-4 py-2 rounded-pill fw-semibold shadow"
+                  onClick={() =>
+                    handlePlaceBid(
+                      selectedAuction._id,
+                      selectedAuction.startingBid
+                    )
+                  }
+                  disabled={!userId}
+                >
+                  💸 Place Bid
+                </button>
+              </div>
 
               {!userId && (
                 <p className="text-muted mt-3">
@@ -207,7 +195,7 @@ const Auction = () => {
           </div>
         </div>
       ) : auctionItems.length === 0 ? (
-        <h5 className="text-center text-muted">No auctions available</h5>
+        <h5 className="text-center text-muted">No live auctions available</h5>
       ) : (
         <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           {auctionItems.map((item) => (
@@ -253,18 +241,6 @@ const Auction = () => {
                       ❌ No user bid on this item
                     </p>
                   )}
-
-                  {new Date(item.endTime) < new Date() ? (
-                    item.winner ? (
-                      <p className="text-success fw-semibold">
-                        🏁 Final Winner: {item.winner.name}
-                      </p>
-                    ) : (
-                      <p className="text-warning fw-semibold">
-                        🏁 Auction Ended. Winner not declared yet.
-                      </p>
-                    )
-                  ) : null}
                 </div>
               </div>
             </div>
