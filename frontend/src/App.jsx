@@ -9,7 +9,7 @@ import Signup from "./components/Signup";
 import Contact from "./components/Contact";
 import MyBids from "./components/MyBids";
 import Winners from "./components/winners";
-
+import ResetPassword from "./components/ResetPassword";
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -32,6 +32,8 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/mybids" element={<MyBids />} />
             <Route path="/winners" element={<Winners />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
           </Routes>
         </div>
         <Footer />
