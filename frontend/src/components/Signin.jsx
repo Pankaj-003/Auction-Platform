@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ForgotPassword from "./ForgotPassword"; // adjust the path if needed
 
 const Signin = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
@@ -7,6 +8,7 @@ const Signin = ({ setIsAuthenticated }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false); // 👈 toggle state
 
   const handleSignin = async (e) => {
     e.preventDefault();
@@ -23,21 +25,26 @@ const Signin = ({ setIsAuthenticated }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // ✅ Store full user data in localStorage
         localStorage.setItem(
           "user",
           JSON.stringify({
             userId: data.userId,
             name: data.name,
             email: data.email,
+            role: data.role,
           })
         );
-
-        // ✅ Also store just userId separately for Contact page use
-        localStorage.setItem("userId", data.userId); // <-- 🔥 Add this line
-
+        localStorage.setItem("userId", data.userId);
         setIsAuthenticated(true);
-        navigate("/"); // Redirect to home page
+
+        // Role-based redirect
+        if (data.role === "buyer") {
+          navigate("/buyer-dashboard");
+        } else if (data.role === "seller") {
+          navigate("/seller-dashboard");
+        } else {
+          navigate("/");
+        }
       } else {
         setError(data.error || "Login failed. Check credentials.");
       }
@@ -47,6 +54,23 @@ const Signin = ({ setIsAuthenticated }) => {
 
     setLoading(false);
   };
+
+  // 🧠 If forgot password is toggled, show that instead of Signin form
+  if (showForgotPassword) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="card p-4 shadow-lg" style={{ width: "400px" }}>
+          <button
+            className="btn btn-link text-start p-0 mb-3"
+            onClick={() => setShowForgotPassword(false)}
+          >
+            ← Back to Sign In
+          </button>
+          <ForgotPassword />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
@@ -76,11 +100,24 @@ const Signin = ({ setIsAuthenticated }) => {
             />
           </div>
           {error && <p className="text-danger">{error}</p>}
-          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+            disabled={loading}
+          >
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
         <p className="text-center mt-3">
+          <button
+            className="btn btn-link text-decoration-none p-0"
+            onClick={() => setShowForgotPassword(true)}
+          >
+            Forgot Password?
+          </button>
+        </p>
+        <p className="text-center">
           Don't have an account? <a href="/signup">Sign Up</a>
         </p>
       </div>
