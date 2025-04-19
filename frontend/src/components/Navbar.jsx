@@ -4,12 +4,15 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../Navbar.css";
 import { authAPI, handleLogout } from "../api";
+import { FaChevronDown, FaUser, FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa";
+import { useTheme } from "../context/ThemeProvider";
 
 const Navbar = ({ isAuthenticated, user, onLogout }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   // Load user from props or localStorage
   useEffect(() => {
@@ -93,7 +96,7 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
   };
 
   const toggleDropdown = () => {
-    // Force check localStorage for token in case state is out of sync
+    // Force check localStorage for token in case bb state is out of sync
     const token = localStorage.getItem("token");
     
     if (!token) {
@@ -114,6 +117,12 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Enhanced theme toggle handler with logging
+  const handleThemeToggle = () => {
+    console.log("Theme toggle clicked, current theme:", theme);
+    toggleTheme();
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark custom-navbar">
@@ -161,6 +170,20 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
                     Winners
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <button 
+                    className="theme-toggle-navbar" 
+                    onClick={handleThemeToggle}
+                    aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                  >
+                    {theme === 'light' ? (
+                      <FaMoon className="icon" />
+                    ) : (
+                      <FaSun className="icon" />
+                    )}
+                    <span className="theme-label">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                  </button>
+                </li>
               </>
             )}
 
@@ -185,17 +208,18 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
                       marginLeft: "5px",
                       objectFit: "cover",
                     }}
-                    title="Your Profile"
+
+                    title="Your Profile" 
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = `https://ui-avatars.com/api/?name=${userProfile?.name || "User"}&background=random`;
                     }}
                   />
-                  {userProfile?.name && (
+                  {/* {userProfile?.name && (
                     <span className="ms-2 text-white">
                       {userProfile.name.split(' ')[0]}
                     </span>
-                  )}
+                  )} */}
                 </div>
 
                 {showDropdown && (
@@ -220,11 +244,27 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
                 )}
               </li>
             ) : (
-              <li className="nav-item ms-2">
-                <Link className="btn login-btn" to="/signin">
-                  Login
-                </Link>
-              </li>
+              <>
+                <li className="nav-item">
+                  <button 
+                    className="theme-toggle-navbar" 
+                    onClick={handleThemeToggle}
+                    aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                  >
+                    {theme === 'light' ? (
+                      <FaMoon className="icon" />
+                    ) : (
+                      <FaSun className="icon" />
+                    )}
+                    <span className="theme-label">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                  </button>
+                </li>
+                <li className="nav-item ms-2">
+                  <Link className="btn login-btn" to="/signin">
+                    Login
+                  </Link>
+                </li>
+              </>
             )}
           </ul>
         </div>

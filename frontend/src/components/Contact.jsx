@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { FaPaperPlane, FaUser, FaEnvelope, FaComment } from "react-icons/fa";
+import { useAlert } from "./AlertProvider";
 import "../contact.css";
-import { toast, ToastContainer } from "react-toastify"; // Correct import for both `toast` and `ToastContainer`
-import "react-toastify/dist/ReactToastify.css"; // Required CSS import
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +9,8 @@ const Contact = () => {
     email: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const alert = useAlert();
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -47,9 +48,11 @@ const Contact = () => {
 
     // Check if user is logged in
     if (!userId) {
-      toast.error("Please login to send a message.");
+      alert.warning("Please login to send a message", { position: "bottom-center" });
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("http://localhost:8000/api/contact", {
@@ -62,28 +65,66 @@ const Contact = () => {
 
       if (response.ok) {
         setFormData({ ...formData, message: "" });
-        toast.success("Your message has been sent!");
+        alert.success("Your message has been sent!");
       } else {
-        toast.error("Failed to send message.");
+        alert.error("Failed to send message");
       }
     } catch (err) {
       console.error("Error submitting form:", err);
-      toast.error("An error occurred. Please try again.");
+      alert.error("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4 contact-header">Contact Us</h2>
-      <div className="row justify-content-center">
-        <div className="col-md-6">
-          <div className="card p-4 shadow-lg custom-card">
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label className="form-label custom-label">Full Name</label>
+    <div className="contact-container grid-bg">
+      <div className="container">
+        <div className="contact-header">
+          <h1 className="gradient-text">Contact Us</h1>
+          <p className="contact-subheading">We'd love to hear from you</p>
+        </div>
+        
+        <div className="contact-content">
+          <div className="contact-info">
+            <div className="glass-panel contact-info-card">
+              <h3>Get in Touch</h3>
+              <p>Have questions about our auction platform? Our team is here to help you with any inquiries.</p>
+              
+              <div className="contact-features">
+                <div className="contact-feature">
+                  <div className="feature-icon">
+                    <FaEnvelope />
+                  </div>
+                  <div className="feature-text">
+                    <h4>Email Support</h4>
+                    <p>support@auctionhub.com</p>
+                  </div>
+                </div>
+                
+                <div className="contact-feature">
+                  <div className="feature-icon">
+                    <FaComment />
+                  </div>
+                  <div className="feature-text">
+                    <h4>Live Chat</h4>
+                    <p>Available 24/7</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="contact-form-container">
+            <form onSubmit={handleSubmit} className="future-card contact-form">
+              <div className="form-group">
+                <label className="form-label">
+                  <FaUser className="input-icon" />
+                  <span>Full Name</span>
+                </label>
                 <input
                   type="text"
-                  className="form-control custom-input"
+                  className="future-input"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
@@ -91,11 +132,15 @@ const Contact = () => {
                   placeholder="Enter your full name"
                 />
               </div>
-              <div className="mb-3">
-                <label className="form-label custom-label">Email</label>
+              
+              <div className="form-group">
+                <label className="form-label">
+                  <FaEnvelope className="input-icon" />
+                  <span>Email Address</span>
+                </label>
                 <input
                   type="email"
-                  className="form-control custom-input"
+                  className="future-input"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
@@ -103,27 +148,35 @@ const Contact = () => {
                   placeholder="Enter your email"
                 />
               </div>
-              <div className="mb-3">
-                <label className="form-label custom-label">Message</label>
+              
+              <div className="form-group">
+                <label className="form-label">
+                  <FaComment className="input-icon" />
+                  <span>Message</span>
+                </label>
                 <textarea
-                  className="form-control custom-textarea"
+                  className="future-input"
                   name="message"
                   rows="4"
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  placeholder="Enter your message"
+                  placeholder="How can we help you?"
                 />
               </div>
-              <button type="submit" className="btn btn-primary w-100 custom-btn">
-                Send Message
+              
+              <button 
+                type="submit" 
+                className="future-button submit-btn" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Sending..." : "Send Message"}
+                <FaPaperPlane />
               </button>
             </form>
           </div>
         </div>
       </div>
-      {/* ToastContainer to display the toasts */}
-      <ToastContainer />
     </div>
   );
 };

@@ -1,0 +1,120 @@
+.custom-alert {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  min-width: 280px;
+  max-width: 350px;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  animation: slideIn 0.3s ease-out forwards;
+  backdrop-filter: blur(5px);
+}
+
+/* Alert positions */
+.custom-alert-top-right {
+  top: 20px;
+  right: 20px;
+}
+
+.custom-alert-top-left {
+  top: 20px;
+  left: 20px;
+}
+
+.custom-alert-bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.custom-alert-bottom-left {
+  bottom: 20px;
+  left: 20px;
+}
+
+.custom-alert-top-center {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.custom-alert-bottom-center {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Alert types */
+.custom-alert-success {
+  background-color: rgba(239, 253, 244, 0.95);
+  border-left: 5px solid #10b981;
+  color: #065f46;
+}
+
+.custom-alert-error {
+  background-color: rgba(254, 242, 242, 0.95);
+  border-left: 5px solid #ef4444;
+  color: #991b1b;
+}
+
+.custom-alert-warning {
+  background-color: rgba(255, 251, 235, 0.95);
+  border-left: 5px solid #f59e0b;
+  color: #92400e;
+}
+
+.custom-alert-info {
+  background-color: rgba(239, 246, 255, 0.95);
+  border-left: 5px solid #3b82f6;
+  color: #1e40af;
+}
+
+.custom-alert-icon {
+  margin-right: 12px;
+  font-size: 1.2rem;
+}
+
+.custom-alert-content {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.custom-alert-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 4px;
+  transition: opacity 0.2s;
+  opacity: 0.6;
+  color: inherit;
+}
+
+.custom-alert-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+} 

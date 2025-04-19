@@ -11,7 +11,13 @@ import MyBids from "./components/MyBids";
 import Winners from "./components/winners";
 import ResetPassword from "./components/ResetPassword";
 import Profile from "./components/Profile";
+import Dashboard from "./components/Dashboard";
 import { checkAuth } from "./api/auth";
+import { AlertProvider } from "./components/AlertProvider";
+import { ThemeProvider } from "./context/ThemeProvider";
+import "./styles/App.css";
+import "./styles/theme.css";
+import "./styles/futuristic.css";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,7 +47,6 @@ const App = () => {
           setUser(authStatus.user);
         } else {
           console.warn("App: Token invalid or user data missing");
-          // Update localStorage to match the state
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           setUser(null);
@@ -75,12 +80,8 @@ const App = () => {
     console.log("ProtectedRoute - Authentication state:", { isAuthenticated, authLoading });
     
     if (authLoading) {
-      // Show loading while checking authentication
-      console.log("ProtectedRoute - Still loading auth state");
-      return <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      return <div className="loader-container">
+        <div className="loader"></div>
       </div>;
     }
     
@@ -91,12 +92,10 @@ const App = () => {
     console.log("ProtectedRoute - Final auth check:", { stateAuth: isAuthenticated, tokenAuth: !!token });
     
     if (!isAuth) {
-      // Not authenticated, redirect to signin
       console.warn("ProtectedRoute - Not authenticated, redirecting to signin");
       return <Navigate to="/signin" replace />;
     }
     
-    // Authenticated, render the protected component
     console.log("ProtectedRoute - Authenticated, rendering child component");
     return children;
   };
@@ -104,84 +103,89 @@ const App = () => {
   // Public route that redirects if already authenticated
   const AuthRoute = ({ element }) => {
     if (isAuthenticated) {
-      // Already logged in, redirect to home
       return <Navigate to="/" replace />;
     }
     
-    // Not authenticated, render the auth component
     return element;
   };
 
   if (authLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="loader-container">
+        <div className="loader"></div>
       </div>
     );
   }
 
   return (
-    <BrowserRouter>
-      <div className="app-container">
-        <Navbar 
-          isAuthenticated={isAuthenticated} 
-          user={user} 
-          onLogout={handleLogout} 
-        />
-        <div className="content">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Auction />} />
-            <Route path="/contact" element={<Contact />} />
-            
-            {/* Auth routes - redirect if already logged in */}
-            <Route path="/signin" element={
-              <AuthRoute element={<Signin setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} />} />
-            } />
-            <Route path="/signup" element={
-              <AuthRoute element={<Signup />} />
-            } />
-            <Route path="/reset-password" element={
-              <AuthRoute element={<ResetPassword />} />
-            } />
-            <Route path="/buyer-login" element={
-              <AuthRoute element={<Signin setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} presetRole="buyer" />} />
-            } />
-            <Route path="/seller-login" element={
-              <AuthRoute element={<Signin setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} presetRole="seller" />} />
-            } />
-            
-            {/* Protected routes - only accessible when logged in */}
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile setIsAuthenticated={setIsAuthenticated} />
-              </ProtectedRoute>
-            } />
-            <Route path="/sell" element={
-              <ProtectedRoute>
-                <Sell />
-              </ProtectedRoute>
-            } />
-            <Route path="/mybids" element={
-              <ProtectedRoute>
-                <MyBids />
-              </ProtectedRoute>
-            } />
-            <Route path="/winners" element={
-              <ProtectedRoute>
-                <Winners />
-              </ProtectedRoute>
-            } />
-            
-            {/* Catch all - redirect to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-        <Footer />
-      </div>
-    </BrowserRouter>
+    <ThemeProvider>
+      <AlertProvider>
+        <BrowserRouter>
+          <div className="app-container">
+            <Navbar 
+              isAuthenticated={isAuthenticated} 
+              user={user} 
+              onLogout={handleLogout} 
+            />
+            <div className="content">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Auction />} />
+                <Route path="/contact" element={<Contact />} />
+                
+                {/* Auth routes - redirect if already logged in */}
+                <Route path="/signin" element={
+                  <AuthRoute element={<Signin setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} />} />
+                } />
+                <Route path="/signup" element={
+                  <AuthRoute element={<Signup />} />
+                } />
+                <Route path="/reset-password" element={
+                  <AuthRoute element={<ResetPassword />} />
+                } />
+                <Route path="/buyer-login" element={
+                  <AuthRoute element={<Signin setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} presetRole="buyer" />} />
+                } />
+                <Route path="/seller-login" element={
+                  <AuthRoute element={<Signin setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} presetRole="seller" />} />
+                } />
+                
+                {/* Protected routes - only accessible when logged in */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile setIsAuthenticated={setIsAuthenticated} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/sell" element={
+                  <ProtectedRoute>
+                    <Sell />
+                  </ProtectedRoute>
+                } />
+                <Route path="/mybids" element={
+                  <ProtectedRoute>
+                    <MyBids />
+                  </ProtectedRoute>
+                } />
+                <Route path="/winners" element={
+                  <ProtectedRoute>
+                    <Winners />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Catch all - redirect to home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </AlertProvider>
+    </ThemeProvider>
   );
 };
 

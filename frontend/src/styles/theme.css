@@ -1,0 +1,128 @@
+/* Theme CSS Variables */
+:root {
+  /* Default theme is dark */
+  /* Colors */
+  --primary-color: #6c5ce7;
+  --primary-dark: #5046c3;
+  --primary-light: rgba(108, 92, 231, 0.2);
+  --secondary-color: #00cec9;
+  --accent-color: #fd79a8;
+  --success-color: #00b894;
+  --error-color: #d63031;
+  --warning-color: #fdcb6e;
+  
+  /* Dark theme colors */
+  --dark-bg: #131417;
+  --dark-card: #1e1f26;
+  --dark-border: #2d2e3a;
+  --text-primary: #f5f6fa;
+  --text-secondary: #a4b0be;
+  --text-muted: #747d8c;
+  
+  /* Gradients and Effects */
+  --gradient-primary: linear-gradient(135deg, #6c5ce7 0%, #a55eea 100%);
+  --gradient-success: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 15px 25px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 15px rgba(108, 92, 231, 0.5);
+  
+  /* Border radius */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  --border-radius-xl: 30px;
+  
+  /* Transitions */
+  --animation-normal: 0.3s ease;
+  --blur-effect: blur(10px);
+}
+
+/* Light Theme Variables */
+[data-theme="light"] {
+  /* Light theme background colors */
+  --dark-bg: #f7f7f9;
+  --dark-card: #ffffff;
+  --dark-border: #e1e1e8;
+  
+  /* Light theme text colors */
+  --text-primary: #2d3436;
+  --text-secondary: #505a62;
+  --text-muted: #8395a7;
+  
+  /* Shadow adjustments for light theme */
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 15px 25px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 15px rgba(108, 92, 231, 0.3);
+  
+  /* Gradient adjustments */
+  --gradient-primary: linear-gradient(135deg, #6c5ce7 0%, #a55eea 100%);
+  --gradient-success: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+  
+  /* Blur effect adjustment */
+  --blur-effect: blur(8px);
+}
+
+/* Theme Transition */
+.theme-transition * {
+  transition: background-color 0.5s ease, 
+              color 0.5s ease, 
+              border-color 0.5s ease, 
+              box-shadow 0.5s ease !important;
+}
+
+/* Basic transitions for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Theme Toggle Switch */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-toggle .icon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  transition: transform 0.5s ease;
+}
+
+.theme-toggle:hover .icon {
+  transform: rotate(30deg);
+}
+
+/* Dark mode specific overrides */
+[data-theme="dark"] .card,
+[data-theme="dark"] .auction-card,
+[data-theme="dark"] .winner-card,
+[data-theme="dark"] .product-card {
+  box-shadow: var(--shadow-md);
+}
+
+/* Light mode specific overrides */
+[data-theme="light"] .card,
+[data-theme="light"] .auction-card,
+[data-theme="light"] .winner-card,
+[data-theme="light"] .product-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+} 

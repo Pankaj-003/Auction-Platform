@@ -1,0 +1,322 @@
+/* Futuristic Banner Component Styling */
+.futuristic-banner {
+  position: relative;
+  width: 100%;
+  height: 580px;
+  overflow: hidden;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 3.5rem;
+}
+
+.banner-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #131417 0%, #1e1f26 100%);
+  z-index: 1;
+}
+
+.banner-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(108, 92, 231, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 206, 201, 0.15) 0%, transparent 50%);
+}
+
+.banner-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, rgba(108, 92, 231, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(108, 92, 231, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  z-index: 2;
+}
+
+.banner-content {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  z-index: 5;
+}
+
+.banner-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4rem;
+}
+
+.banner-subtitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  position: relative;
+  display: inline-block;
+  padding-left: 40px;
+}
+
+.banner-subtitle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--primary-color);
+  transform: translateY(-50%);
+}
+
+.banner-title {
+  font-size: 4.5rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--text-primary) 0%, var(--secondary-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  max-width: 700px;
+}
+
+.banner-description {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+.banner-cta {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.banner-button {
+  padding: 1rem 2.5rem;
+  border-radius: var(--border-radius-lg);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.banner-button.primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.banner-button.primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-primary);
+  z-index: -1;
+  transition: transform 0.5s ease;
+  transform: translateX(-100%);
+}
+
+.banner-button.primary:hover {
+  box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+  transform: translateY(-3px);
+}
+
+.banner-button.primary:hover::before {
+  transform: translateX(0);
+}
+
+.banner-button.secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid rgba(108, 92, 231, 0.5);
+}
+
+.banner-button.secondary:hover {
+  background: rgba(108, 92, 231, 0.1);
+  border-color: var(--primary-color);
+  transform: translateY(-3px);
+}
+
+.banner-image {
+  flex: 1;
+  position: relative;
+}
+
+.banner-product {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 500px;
+  transition: all 0.5s ease;
+  animation: float 5s ease-in-out infinite;
+}
+
+.banner-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(108, 92, 231, 0.1) 0%, transparent 70%);
+  box-shadow: 0 0 60px rgba(108, 92, 231, 0.3);
+  animation: pulse 4s ease-in-out infinite alternate;
+}
+
+.banner-particle {
+  position: absolute;
+  background: rgba(108, 92, 231, 0.5);
+  border-radius: 50%;
+  filter: blur(3px);
+  animation: moveParticle 8s linear infinite;
+}
+
+.banner-particle:nth-child(1) {
+  width: 10px;
+  height: 10px;
+  top: 20%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.banner-particle:nth-child(2) {
+  width: 15px;
+  height: 15px;
+  top: 30%;
+  left: 60%;
+  animation-delay: 1s;
+}
+
+.banner-particle:nth-child(3) {
+  width: 8px;
+  height: 8px;
+  top: 70%;
+  left: 30%;
+  animation-delay: 2s;
+}
+
+.banner-particle:nth-child(4) {
+  width: 12px;
+  height: 12px;
+  top: 50%;
+  left: 80%;
+  animation-delay: 3s;
+}
+
+/* Animations */
+@keyframes float {
+  0% {
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    transform: translate(-50%, -55%);
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 60px rgba(108, 92, 231, 0.3);
+    background: radial-gradient(circle, rgba(108, 92, 231, 0.1) 0%, transparent 70%);
+  }
+  100% {
+    box-shadow: 0 0 80px rgba(108, 92, 231, 0.5);
+    background: radial-gradient(circle, rgba(108, 92, 231, 0.2) 0%, transparent 70%);
+  }
+}
+
+@keyframes moveParticle {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(30px, -30px);
+    opacity: 0;
+  }
+}
+
+/* Media Queries */
+@media (max-width: 992px) {
+  .banner-content {
+    flex-direction: column;
+  }
+  
+  .banner-info {
+    padding: 3rem 2rem;
+    order: 2;
+  }
+  
+  .banner-image {
+    order: 1;
+    height: 300px;
+  }
+  
+  .banner-title {
+    font-size: 3rem;
+  }
+  
+  .futuristic-banner {
+    height: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .banner-title {
+    font-size: 2.5rem;
+  }
+  
+  .banner-cta {
+    flex-direction: column;
+  }
+  
+  .banner-subtitle {
+    font-size: 1rem;
+  }
+  
+  .banner-image {
+    height: 250px;
+  }
+  
+  .banner-circle {
+    width: 250px;
+    height: 250px;
+  }
+} 

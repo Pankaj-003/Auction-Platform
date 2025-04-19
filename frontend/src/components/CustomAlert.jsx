@@ -1,20 +1,39 @@
 // CustomAlert.jsx
-import React from "react";
+import React, { useEffect } from "react";
+import "../styles/CustomAlert.css";
 
-const CustomAlert = ({ message, type, onClose }) => {
+const CustomAlert = ({ message, type, onClose, duration = 3000, position = "top-right" }) => {
+  useEffect(() => {
+    if (duration && duration > 0) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [duration, onClose]);
+
+  const getIcon = () => {
+    switch (type) {
+      case "success":
+        return "✅";
+      case "error":
+        return "❌";
+      case "warning":
+        return "⚠️";
+      case "info":
+        return "ℹ️";
+      default:
+        return "ℹ️";
+    }
+  };
+
   return (
-    <div
-      className={`alert alert-${type} alert-dismissible fade show`}
-      role="alert"
-    >
-      <strong>{type === "success" ? "Success!" : "Error!"}</strong> {message}
-      <button
-        type="button"
-        className="btn-close"
-        data-bs-dismiss="alert"
-        aria-label="Close"
-        onClick={onClose}
-      ></button>
+    <div className={`custom-alert custom-alert-${position} custom-alert-${type}`}>
+      <div className="custom-alert-icon">{getIcon()}</div>
+      <div className="custom-alert-content">{message}</div>
+      <button className="custom-alert-close" onClick={onClose}>
+        ×
+      </button>
     </div>
   );
 };

@@ -1,0 +1,538 @@
+/* Dashboard Component Styling */
+.dashboard-container {
+  background-color: #121212;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: #f5f5f5;
+}
+
+/* Dashboard Tabs */
+.dashboard-tabs {
+  display: flex;
+  justify-content: center;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 0.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-tab {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  margin: 0 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #aaa;
+}
+
+.dashboard-tab:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.dashboard-tab.active {
+  background-color: #4b48db;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(75, 72, 219, 0.3);
+}
+
+.tab-icon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* Stats Container */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-card:nth-child(1) .stat-icon {
+  color: #4b48db; /* Purple for bids */
+}
+
+.stat-card:nth-child(2) .stat-icon {
+  color: #5b68f6; /* Blue for active auctions */
+}
+
+.stat-card:nth-child(3) .stat-icon {
+  color: #22c55e; /* Green for wins */
+}
+
+.stat-card:nth-child(4) .stat-icon {
+  color: #ef4444; /* Red for watchlist */
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(120deg, #e0e0e0, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  color: #aaa;
+  font-size: 1rem;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #4b48db;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Activity Section */
+.activity-container {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.activity-container h3 {
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #f5f5f5;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  background-color: #252525;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.activity-item:hover {
+  background-color: #2a2a2a;
+}
+
+.activity-icon {
+  font-size: 1.25rem;
+  margin-right: 1rem;
+  margin-top: 0.25rem;
+}
+
+.activity-icon.bid {
+  color: #4b48db; /* Purple for bids */
+}
+
+.activity-icon.win {
+  color: #22c55e; /* Green for wins */
+}
+
+.activity-icon.watchlist {
+  color: #ef4444; /* Red for watchlist */
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-text {
+  margin-bottom: 0.25rem;
+}
+
+.activity-time {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+/* Profile Section */
+.profile-container {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #4b48db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  margin-right: 1.5rem;
+}
+
+.profile-info h2 {
+  margin-bottom: 0.5rem;
+  color: #f5f5f5;
+}
+
+.profile-info p {
+  color: #aaa;
+  margin-bottom: 0.25rem;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.profile-section {
+  background-color: #252525;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.profile-section h3 {
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: #f5f5f5;
+}
+
+.profile-field {
+  display: flex;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.profile-field label {
+  width: 120px;
+  color: #aaa;
+}
+
+.profile-field span {
+  flex: 1;
+}
+
+.edit-profile-btn {
+  display: inline-block;
+  background-color: #4b48db;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.edit-profile-btn:hover {
+  background-color: #3f3bbd;
+  transform: translateY(-2px);
+}
+
+/* My Auctions Section */
+.my-auctions-container {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.my-auctions-container h3 {
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #f5f5f5;
+}
+
+.auctions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.auction-card {
+  background-color: #252525;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.auction-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.auction-image {
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+}
+
+.auction-details {
+  padding: 1.25rem;
+}
+
+.auction-details h4 {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.auction-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.auction-status {
+  margin-bottom: 1rem;
+}
+
+.active-status {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+.ended-status {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+.view-auction-btn {
+  display: block;
+  text-align: center;
+  background-color: #4b48db;
+  color: white;
+  padding: 0.6rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.view-auction-btn:hover {
+  background-color: #3f3bbd;
+}
+
+/* Watchlist Section */
+.watchlist-container {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.watchlist-container h3 {
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #f5f5f5;
+}
+
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.watchlist-card {
+  background-color: #252525;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.watchlist-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.watchlist-image {
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+}
+
+.watchlist-details {
+  padding: 1.25rem;
+}
+
+.watchlist-details h4 {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.watchlist-description {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.watchlist-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.current-bid {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.time-remaining {
+  color: #f5f5f5;
+}
+
+.watchlist-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.view-btn, .remove-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.view-btn {
+  background-color: #4b48db;
+  color: white;
+  text-decoration: none;
+}
+
+.view-btn:hover {
+  background-color: #3f3bbd;
+}
+
+.remove-btn {
+  background-color: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  cursor: pointer;
+}
+
+.remove-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Empty States */
+.empty-state, .empty-activity, .empty-profile {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #aaa;
+}
+
+.create-auction-btn, .browse-auctions-btn {
+  display: inline-block;
+  background-color: #4b48db;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.create-auction-btn:hover, .browse-auctions-btn:hover {
+  background-color: #3f3bbd;
+  transform: translateY(-2px);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .dashboard-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .dashboard-tab {
+    margin: 0.25rem;
+  }
+  
+  .stats-container {
+    gap: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profile-avatar {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .profile-field {
+    flex-direction: column;
+  }
+  
+  .profile-field label {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+} 

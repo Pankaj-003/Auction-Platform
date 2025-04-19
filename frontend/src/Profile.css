@@ -1,5 +1,16 @@
 .profile-container {
-  margin-bottom: 60px;
+  margin-bottom: 0;
+  background-color: #121212;
+  min-height: 100vh;
+  color: #e0e0e0;
+  padding-bottom: 3rem;
+}
+
+.profile-header {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+  padding: 2rem 0;
+  border-bottom: 1px solid #333;
+  margin-bottom: 2rem;
 }
 
 .profile-pic-container {
@@ -9,8 +20,9 @@
   margin: 0 auto;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  border: 3px solid var(--primary-color);
 }
 
 .profile-pic {
@@ -24,7 +36,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   height: 40px;
   display: flex;
   align-items: center;
@@ -44,28 +56,192 @@
 }
 
 .card {
+  background-color: #1e1e1e;
   border: none;
   border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  margin-bottom: 2rem;
 }
 
 .card-header {
-  border-top-left-radius: 10px !important;
-  border-top-right-radius: 10px !important;
+  background-color: #2c2c2c;
+  color: white;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.card-body {
+  background-color: #1e1e1e;
+  padding: 1.5rem;
+}
+
+.form-control {
+  background-color: #2c2c2c;
+  border: 1px solid #444;
+  color: #e0e0e0;
 }
 
 .form-control:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  background-color: #333;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+  color: white;
+}
+
+.form-label {
+  color: #bbb;
 }
 
 .btn-primary {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .btn-primary:hover {
-  background-color: #0b5ed7;
-  border-color: #0a58ca;
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-outline-danger {
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.btn-outline-danger:hover {
+  background-color: #f87171;
+  color: white;
+}
+
+.alert-success {
+  background-color: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.alert-danger {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.alert-warning {
+  background-color: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.text-muted {
+  color: #9ca3af !important;
+}
+
+.badge {
+  font-weight: 500;
+}
+
+.bg-info {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.stats-card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+}
+
+.stats-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.stats-label {
+  color: #bbb;
+}
+
+.recent-activity {
+  margin-top: 2rem;
+}
+
+.activity-item {
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  background-color: #1e1e1e;
+  margin-bottom: 1rem;
+  border-left: 4px solid var(--primary-color);
+  display: flex;
+  align-items: center;
+}
+
+.activity-icon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  margin-right: 1rem;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: white;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.watchlist-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #2c2c2c;
+  border-radius: var(--border-radius);
+  margin-bottom: 0.75rem;
+  transition: background-color 0.2s;
+}
+
+.watchlist-item:hover {
+  background-color: #333;
+}
+
+.watchlist-img {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--border-radius);
+  object-fit: cover;
+  margin-right: 1rem;
+}
+
+.watchlist-details {
+  flex: 1;
+}
+
+.watchlist-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: white;
+}
+
+.watchlist-info {
+  font-size: 0.8rem;
+  color: #bbb;
+}
+
+.watchlist-price {
+  font-weight: 700;
+  color: var(--secondary-color);
 }
 
 /* Responsive adjustments */

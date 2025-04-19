@@ -1,17 +1,22 @@
-import React from "react";
-import "../Footer.css";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import '../styles/Footer.css';
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  
   return (
-    <footer className="footer">
+    <footer className="simple-footer">
       <div className="footer-container">
-        <p className="footer-text">
-          © {new Date().getFullYear()} AuctionHub. All rights reserved. Developed by Pankaj Biswas.
-        </p>
+        <div className="footer-copyright">
+          © {currentYear} AuctionHub. All Rights Reserved @Pankaj Biswas.
+        </div>
         <div className="footer-links">
-          <a href="#" className="footer-link">Privacy Policy</a>
-          <a href="#" className="footer-link">Terms of Service</a>
-          <a href="/contact" className="footer-link">Contact Us</a>
+          <Link to="/privacy" className="footer-link">Privacy Policy</Link>
+          <span className="footer-separator">|</span>
+          <Link to="/terms" className="footer-link">Terms of Service</Link>
+          <span className="footer-separator">|</span>
+          <Link to="/contact" className="footer-link">Contact Us</Link>
         </div>
       </div>
     </footer>

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import http from "http";
 import nodemailer from "nodemailer";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/authRoutes.js";
 import auctionRoutes from "./routes/auctionRoutes.js";
@@ -15,8 +16,16 @@ import Auction from "./models/Auction.js";
 import Bid from "./models/Bid.js";
 import User from "./models/User.js";
 
+// Import dashboard and watchlist routes
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import watchlistRoutes from "./routes/watchlist.routes.js";
+
 dotenv.config();
 const app = express();
+
+// Get __dirname equivalent in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors({
@@ -42,9 +51,11 @@ app.use("/api/auctions", auctionRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/watchlist", watchlistRoutes);
 
 // Serve uploads folder
-app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API route to get all auctions with winner's name populated
 app.get("/api/auctions", async (req, res) => {

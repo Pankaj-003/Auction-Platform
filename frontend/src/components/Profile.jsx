@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaUserTag, FaCamera, FaSave } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaCamera, FaSave, FaGavel, FaEye, FaHistory, FaTrophy, FaHeart, FaBell } from "react-icons/fa";
 import { authAPI } from "../api";
 import { checkAuth } from "../api/auth";
 import "../Profile.css";
@@ -14,6 +14,65 @@ const Profile = ({ setIsAuthenticated }) => {
   const [success, setSuccess] = useState("");
   const [fetchStatus, setFetchStatus] = useState({ tried: false, success: false });
   const [showRawData, setShowRawData] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+  
+  // Mock auction data for demonstration
+  const [auctionStats] = useState({
+    bidsPlaced: 12,
+    activeAuctions: 3,
+    wonAuctions: 2,
+    watchlistCount: 5
+  });
+  
+  // Mock watchlist data for demonstration
+  const [watchlist] = useState([
+    {
+      id: 1,
+      title: "Vintage Camera",
+      image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=100",
+      currentBid: 5200,
+      endTime: new Date(Date.now() + 86400000), // 1 day from now
+    },
+    {
+      id: 2,
+      title: "Antique Watch",
+      image: "https://images.unsplash.com/photo-1524592094857-4f23a29cff92?q=80&w=100",
+      currentBid: 7800,
+      endTime: new Date(Date.now() + 172800000), // 2 days from now
+    },
+    {
+      id: 3,
+      title: "Collectible Coins",
+      image: "https://images.unsplash.com/photo-1605792657660-596af9009e82?q=80&w=100",
+      currentBid: 3500,
+      endTime: new Date(Date.now() + 259200000), // 3 days from now
+    }
+  ]);
+  
+  // Mock activity data for demonstration
+  const [activities] = useState([
+    {
+      id: 1,
+      type: "bid",
+      title: "You placed a bid on Vintage Camera",
+      time: new Date(Date.now() - 3600000), // 1 hour ago
+      icon: <FaGavel />
+    },
+    {
+      id: 2,
+      type: "win",
+      title: "You won the auction for Antique Vase",
+      time: new Date(Date.now() - 86400000), // 1 day ago
+      icon: <FaTrophy />
+    },
+    {
+      id: 3,
+      type: "watchlist",
+      title: "You added Rare Stamps to your watchlist",
+      time: new Date(Date.now() - 172800000), // 2 days ago
+      icon: <FaHeart />
+    }
+  ]);
   
   // Form state
   const [name, setName] = useState("");
@@ -290,12 +349,49 @@ const Profile = ({ setIsAuthenticated }) => {
     setIsAuthenticated(false);
     navigate("/signin");
   };
+  
+  const formatTimeAgo = (date) => {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    
+    return Math.floor(seconds) + " seconds ago";
+  };
+  
+  const formatTimeLeft = (endTime) => {
+    const diff = endTime - new Date();
+    if (diff <= 0) return "Ended";
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) return `${days}d ${hours}h left`;
+    
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${minutes}m ${seconds}s left`;
+  };
 
   if (loading) {
     return (
       <div 
         className="d-flex flex-column justify-content-center align-items-center vh-100" 
-        style={{ background: "linear-gradient(135deg, #222831 0%, #393E46 100%)" }}
+        style={{ background: "#121212" }}
       >
         <div className="spinner-border text-light mb-3" style={{ width: "3rem", height: "3rem" }} role="status">
           <span className="visually-hidden">Loading...</span>
@@ -307,116 +403,111 @@ const Profile = ({ setIsAuthenticated }) => {
   }
 
   return (
-    <div 
-      className="profile-container container py-5"
-      style={{ 
-        background: "linear-gradient(135deg, #222831 0%, #393E46 100%)",
-        minHeight: "100vh"
-      }}
-    >
-      <div className="row">
-        <div className="col-lg-8 mx-auto">
-          <div className="card shadow" style={{ borderRadius: "15px", border: "none" }}>
-            <div className="card-header text-white" style={{ background: "#00ADB5", borderTopLeftRadius: "15px", borderTopRightRadius: "15px" }}>
-              <h3 className="mb-0">My Profile</h3>
+    <div className="profile-container">
+      <div className="profile-header">
+        <div className="container py-4">
+          <div className="row align-items-center">
+            <div className="col-md-3 mb-4 mb-md-0">
+              <div className="profile-pic-container">
+                <img
+                  src={previewUrl || `https://ui-avatars.com/api/?name=${name || "User"}&background=random&size=200`}
+                  alt="Profile"
+                  className="profile-pic"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${name || "User"}&background=random&size=200`;
+                  }}
+                />
+                <label htmlFor="profilePic" className="upload-overlay">
+                  <FaCamera className="upload-btn" />
+                </label>
+                <input
+                  type="file"
+                  id="profilePic"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+              </div>
             </div>
-            <div className="card-body" style={{ background: "#EEEEEE" }}>
-              {error && <div className="alert alert-danger">{error}</div>}
-              {success && <div className="alert alert-success">{success}</div>}
-              
-              {/* Fetch status indicator */}
-              {fetchStatus.tried && !loading && (
-                <div className={`alert ${fetchStatus.success ? 'alert-success' : 'alert-warning'} small py-2 mb-3`}>
-                  <div className="d-flex align-items-center">
-                    {fetchStatus.success ? (
-                      <>
-                        <span className="text-success me-2">✓</span>
-                        <span>Profile data loaded successfully</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-warning me-2">⚠</span>
-                        <span>Using cached profile data. Some information might be outdated.</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="text-center mb-4">
-                <div className="profile-pic-container">
-                  <img
-                    src={previewUrl || `https://ui-avatars.com/api/?name=${name || "User"}&background=random&size=200`}
-                    alt="Profile"
-                    className="profile-pic"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${name || "User"}&background=random&size=200`;
-                    }}
-                  />
-                </div>
+            <div className="col-md-9">
+              <h2 className="mb-1">{name || "User"}</h2>
+              <p className="mb-3 text-muted">{email || "No email set"}</p>
+              <div className="d-flex align-items-center mb-3">
+                <span className="badge bg-info me-2">
+                  {userData?.role || JSON.parse(localStorage.getItem("user") || '{}').role || "User"}
+                </span>
+                <span className="text-muted small">Member since {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "Unknown"}</span>
               </div>
-
-              {/* User Information Display Section */}
-              <div className="card mb-4 border-0 shadow-sm">
-                <div className="card-header bg-light d-flex justify-content-between align-items-center">
+              <ul className="nav nav-pills">
+                <li className="nav-item">
+                  <button 
+                    className={`btn ${activeTab === "profile" ? "btn-primary" : "btn-dark"} me-2`}
+                    onClick={() => setActiveTab("profile")}
+                  >
+                    <FaUser className="me-2" />
+                    Profile
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    className={`btn ${activeTab === "auctions" ? "btn-primary" : "btn-dark"} me-2`}
+                    onClick={() => setActiveTab("auctions")}
+                  >
+                    <FaGavel className="me-2" />
+                    My Auctions
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    className={`btn ${activeTab === "watchlist" ? "btn-primary" : "btn-dark"} me-2`}
+                    onClick={() => setActiveTab("watchlist")}
+                  >
+                    <FaEye className="me-2" />
+                    Watchlist
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    className={`btn ${activeTab === "activity" ? "btn-primary" : "btn-dark"}`}
+                    onClick={() => setActiveTab("activity")}
+                  >
+                    <FaHistory className="me-2" />
+                    Activity
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="container">
+        {error && <div className="alert alert-danger">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+        
+        {/* Fetch status indicator */}
+        {fetchStatus.tried && !loading && !fetchStatus.success && (
+          <div className="alert alert-warning small py-2 mb-3">
+            <div className="d-flex align-items-center">
+              <span className="text-warning me-2">⚠</span>
+              <span>Using cached profile data. Some information might be outdated.</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Profile Tab */}
+        {activeTab === "profile" && (
+          <div className="row">
+            <div className="col-lg-4 col-md-6 mb-4">
+              <div className="card">
+                <div className="card-header">
                   <h5 className="mb-0"><FaUser className="me-2" />Account Information</h5>
-                  <div className="form-check form-switch">
-                    <input 
-                      className="form-check-input" 
-                      type="checkbox" 
-                      id="showRawData" 
-                      onChange={() => setShowRawData(!showRawData)} 
-                    />
-                    <label className="form-check-label small text-muted" htmlFor="showRawData">
-                      Debug Mode
-                    </label>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div className="row">
-                    <div className="col-md-6">
-                      <p><strong>Name:</strong> {name || "Not set"}</p>
-                      <p><strong>Email:</strong> {email || "Not set"}</p>
-                      {userData?.phone && <p><strong>Phone:</strong> {userData.phone}</p>}
-                      <p><strong>Role:</strong> <span className="badge bg-info text-dark">{userData?.role || JSON.parse(localStorage.getItem("user") || '{}').role || "User"}</span></p>
-                    </div>
-                    <div className="col-md-6">
-                      <p><strong>User ID:</strong> <small className="text-muted">{userData?._id || JSON.parse(localStorage.getItem("user") || '{}').userId}</small></p>
-                      {userData?.createdAt && (
-                        <p><strong>Member Since:</strong> {new Date(userData.createdAt).toLocaleDateString()}</p>
-                      )}
-                      {userData?.lastLogin && (
-                        <p><strong>Last Login:</strong> {new Date(userData.lastLogin).toLocaleString()}</p>
-                      )}
-                      {userData?.address && (
-                        <p><strong>Address:</strong> {userData.address}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {showRawData && (
-                    <div className="mt-3 p-2 bg-light rounded small">
-                      <details>
-                        <summary className="text-muted">Raw user data (debug)</summary>
-                        <pre className="mt-2" style={{ fontSize: '0.75rem', overflowX: 'auto' }}>
-                          {JSON.stringify(userData, null, 2)}
-                        </pre>
-                      </details>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="card mb-4 border-0 shadow-sm">
-                <div className="card-header bg-light">
-                  <h5 className="mb-0"><FaSave className="me-2" />Update Profile</h5>
                 </div>
                 <div className="card-body">
                   <form onSubmit={handleProfileUpdate}>
                     <div className="mb-3">
-                      <label htmlFor="name" className="form-label d-flex align-items-center">
-                        <FaUser className="me-2" />
+                      <label htmlFor="name" className="form-label">
                         Full Name
                       </label>
                       <input
@@ -428,10 +519,9 @@ const Profile = ({ setIsAuthenticated }) => {
                         required
                       />
                     </div>
-
+                    
                     <div className="mb-3">
-                      <label htmlFor="email" className="form-label d-flex align-items-center">
-                        <FaEnvelope className="me-2" />
+                      <label htmlFor="email" className="form-label">
                         Email Address
                       </label>
                       <input
@@ -443,29 +533,11 @@ const Profile = ({ setIsAuthenticated }) => {
                         required
                       />
                     </div>
-
-                    <div className="mb-4">
-                      <label htmlFor="profilePic" className="form-label d-flex align-items-center">
-                        <FaCamera className="me-2" />
-                        Profile Picture
-                      </label>
-                      <input
-                        type="file"
-                        className="form-control"
-                        id="profilePic"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                      <small className="form-text text-muted">
-                        Select a new image to update your profile picture. Maximum size: 2MB.
-                      </small>
-                    </div>
-
-                    <div className="d-grid gap-2 d-md-flex">
+                    
+                    <div className="d-grid gap-2">
                       <button
                         type="submit"
-                        className="btn btn-primary flex-grow-1"
-                        style={{ backgroundColor: "#00ADB5", borderColor: "#00ADB5" }}
+                        className="btn btn-primary"
                         disabled={updating}
                       >
                         {updating ? (
@@ -482,7 +554,7 @@ const Profile = ({ setIsAuthenticated }) => {
                       </button>
                       <button
                         type="button"
-                        className="btn btn-outline-danger flex-grow-1"
+                        className="btn btn-outline-danger"
                         onClick={handleLogout}
                       >
                         Logout
@@ -492,8 +564,219 @@ const Profile = ({ setIsAuthenticated }) => {
                 </div>
               </div>
             </div>
+            
+            <div className="col-lg-8 col-md-6 mb-4">
+              <div className="row">
+                <div className="col-md-6 col-lg-3 mb-3">
+                  <div className="stats-card">
+                    <FaGavel className="mb-3" style={{ fontSize: "2rem", color: "var(--primary-color)" }} />
+                    <div className="stats-value">{auctionStats.bidsPlaced}</div>
+                    <div className="stats-label">Bids Placed</div>
+                  </div>
+                </div>
+                <div className="col-md-6 col-lg-3 mb-3">
+                  <div className="stats-card">
+                    <FaBell className="mb-3" style={{ fontSize: "2rem", color: "var(--primary-color)" }} />
+                    <div className="stats-value">{auctionStats.activeAuctions}</div>
+                    <div className="stats-label">Active Auctions</div>
+                  </div>
+                </div>
+                <div className="col-md-6 col-lg-3 mb-3">
+                  <div className="stats-card">
+                    <FaTrophy className="mb-3" style={{ fontSize: "2rem", color: "var(--secondary-color)" }} />
+                    <div className="stats-value">{auctionStats.wonAuctions}</div>
+                    <div className="stats-label">Auctions Won</div>
+                  </div>
+                </div>
+                <div className="col-md-6 col-lg-3 mb-3">
+                  <div className="stats-card">
+                    <FaHeart className="mb-3" style={{ fontSize: "2rem", color: "#f87171" }} />
+                    <div className="stats-value">{auctionStats.watchlistCount}</div>
+                    <div className="stats-label">Watchlist Items</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="card">
+                <div className="card-header">
+                  <h5 className="mb-0"><FaHistory className="me-2" />Recent Activity</h5>
+                </div>
+                <div className="card-body">
+                  {activities.length === 0 ? (
+                    <p className="text-muted text-center">No recent activities</p>
+                  ) : (
+                    <div className="list-group">
+                      {activities.slice(0, 3).map((activity) => (
+                        <div key={activity.id} className="list-group-item bg-dark border-secondary d-flex align-items-center">
+                          <div className="me-3" style={{ color: activity.type === 'win' ? 'var(--secondary-color)' : 'var(--primary-color)' }}>
+                            {activity.icon}
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="fw-bold">{activity.title}</div>
+                            <div className="text-muted small">{formatTimeAgo(activity.time)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {activities.length > 3 && (
+                    <button 
+                      className="btn btn-link text-primary d-block mx-auto mt-3"
+                      onClick={() => setActiveTab("activity")}
+                    >
+                      View all activity
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+        
+        {/* Auctions Tab */}
+        {activeTab === "auctions" && (
+          <div className="row">
+            <div className="col-12 mb-4">
+              <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0"><FaGavel className="me-2" />My Auctions</h5>
+                  <button className="btn btn-primary btn-sm" onClick={() => navigate("/sell")}>
+                    + Create New Auction
+                  </button>
+                </div>
+                <div className="card-body">
+                  <ul className="nav nav-tabs mb-4">
+                    <li className="nav-item">
+                      <button className="nav-link active">Active Bids</button>
+                    </li>
+                    <li className="nav-item">
+                      <button className="nav-link">Won Auctions</button>
+                    </li>
+                    <li className="nav-item">
+                      <button className="nav-link">My Listings</button>
+                    </li>
+                  </ul>
+                  
+                  <div className="text-center my-5">
+                    <FaGavel style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
+                    <h5 className="mt-3">You don't have any active bids</h5>
+                    <p className="text-muted">Start bidding on items to see them here</p>
+                    <button 
+                      className="btn btn-primary mt-2"
+                      onClick={() => navigate("/")}
+                    >
+                      Browse Auctions
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Watchlist Tab */}
+        {activeTab === "watchlist" && (
+          <div className="row">
+            <div className="col-12 mb-4">
+              <div className="card">
+                <div className="card-header">
+                  <h5 className="mb-0"><FaEye className="me-2" />My Watchlist</h5>
+                </div>
+                <div className="card-body">
+                  {watchlist.length === 0 ? (
+                    <div className="text-center my-5">
+                      <FaEye style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
+                      <h5 className="mt-3">Your watchlist is empty</h5>
+                      <p className="text-muted">Add items to your watchlist to keep track of them</p>
+                      <button 
+                        className="btn btn-primary mt-2"
+                        onClick={() => navigate("/")}
+                      >
+                        Browse Auctions
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="list-group">
+                      {watchlist.map((item) => (
+                        <div 
+                          key={item.id} 
+                          className="list-group-item bg-dark border-secondary d-flex align-items-center"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => navigate(`/auction/${item.id}`)}
+                        >
+                          <img 
+                            src={item.image} 
+                            alt={item.title} 
+                            className="me-3" 
+                            style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "5px" }}
+                          />
+                          <div className="flex-grow-1">
+                            <h6 className="mb-1">{item.title}</h6>
+                            <div className="d-flex justify-content-between">
+                              <span className="text-success">₹ {item.currentBid.toLocaleString()}</span>
+                              <span className="text-muted small">{formatTimeLeft(item.endTime)}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="btn btn-outline-danger btn-sm ms-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              alert("Item removed from watchlist");
+                            }}
+                          >
+                            <FaHeart />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Activity Tab */}
+        {activeTab === "activity" && (
+          <div className="row">
+            <div className="col-12 mb-4">
+              <div className="card">
+                <div className="card-header">
+                  <h5 className="mb-0"><FaHistory className="me-2" />Activity History</h5>
+                </div>
+                <div className="card-body">
+                  {activities.length === 0 ? (
+                    <div className="text-center my-5">
+                      <FaHistory style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
+                      <h5 className="mt-3">No activity yet</h5>
+                      <p className="text-muted">Your auction activities will appear here</p>
+                      <button 
+                        className="btn btn-primary mt-2"
+                        onClick={() => navigate("/")}
+                      >
+                        Browse Auctions
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="list-group">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="list-group-item bg-dark border-secondary d-flex align-items-center">
+                          <div className="me-3" style={{ color: activity.type === 'win' ? 'var(--secondary-color)' : 'var(--primary-color)' }}>
+                            {activity.icon}
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="fw-bold">{activity.title}</div>
+                            <div className="text-muted small">{formatTimeAgo(activity.time)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
