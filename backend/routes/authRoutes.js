@@ -2,11 +2,15 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { upload } from '../middleware/upload.js'; // Import the upload middleware
 
 dotenv.config();
 const router = express.Router();
+
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'auction-platform-secret-key';
 
 // Nodemailer Config for sending emails
 const transporter = nodemailer.createTransport({
@@ -51,8 +55,16 @@ router.post('/signup', upload.single('profilePic'), async (req, res) => {
     // Save the new user to the database
     await newUser.save();
 
-    // Send success response with user data
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: newUser._id, email: newUser.email, role: newUser.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Send success response with user data and token
     res.status(201).json({
+      success: true,
       message: 'User registered successfully',
       user: {
         _id: newUser._id,
@@ -61,6 +73,7 @@ router.post('/signup', upload.single('profilePic'), async (req, res) => {
         role: newUser.role,
         profilePic: newUser.profilePic,
       },
+      token: token
     });
   } catch (error) {
     console.error('Signup Error:', error);
@@ -90,8 +103,16 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Send success response with user info (including profile pic)
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Send success response with user info and token
     res.status(200).json({
+      success: true,
       message: 'Login successful',
       user: {
         _id: user._id,
@@ -100,6 +121,7 @@ router.post('/login', async (req, res) => {
         role: user.role,
         profilePic: user.profilePic,
       },
+      token: token
     });
   } catch (error) {
     console.error('Login Error:', error);
@@ -173,14 +195,111 @@ router.get('/user/:userId', async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.status(200).json({
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       profilePic: user.profilePic,
+      createdAt: user.createdAt
     });
   } catch (err) {
     console.error('Fetch User Error:', err);
     res.status(500).json({ message: 'Error fetching user' });
+  }
+});
+
+// Update User Profile
+router.put('/update-profile/:userId', upload.single('profilePic'), async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { name, email } = req.body;
+    
+    // Validate required fields
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if email is already taken by another user
+    if (email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser && existingUser._id.toString() !== userId) {
+        return res.status(409).json({ error: 'Email is already in use by another account' });
+      }
+    }
+    
+    // Update basic info
+    user.name = name;
+    user.email = email;
+    
+    // Update profile pic if provided
+    if (req.file) {
+      user.profilePic = `uploads/${req.file.filename}`;
+    }
+    
+    // Save updated user
+    await user.save();
+    
+    // Return updated user data
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePic: user.profilePic
+    });
+  } catch (err) {
+    console.error('Update Profile Error:', err);
+    res.status(500).json({ error: 'Server error during profile update' });
+  }
+});
+
+// Validate Token Route
+router.get('/validate-token', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    // Verify the token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Find the user from the decoded token
+    const user = await User.findById(decoded.userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return the authenticated status and user data
+    res.status(200).json({
+      authenticated: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic
+      }
+    });
+  } catch (error) {
+    console.error('Token validation error:', error);
+    
+    // Handle specific JWT errors
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    } else if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    
+    res.status(401).json({ error: 'Invalid token' });
   }
 });
 

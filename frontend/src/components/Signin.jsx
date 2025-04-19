@@ -1,71 +1,112 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import ForgotPassword from "./ForgotPassword"; // adjust the path if needed
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import ForgotPassword from "./ForgotPassword";
+import { FaEnvelope, FaLock, FaSignInAlt } from "react-icons/fa";
+import * as authAPI from "../api/auth";
 
-const Signin = ({ setIsAuthenticated, presetRole = "" }) => {
+const Signin = ({ setIsAuthenticated, onLogin, presetRole = "" }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false); // 👈 toggle state
-  if (presetRole && data.role !== presetRole) {
-    setError(`This login is only for ${presetRole}s`);
-    return;
-  }
-  
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Check if already logged in
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+    
+    if (user && token) {
+      // Already logged in - redirect to home
+      setIsAuthenticated(true);
+      navigate("/");
+    }
+  }, [navigate, setIsAuthenticated]);
+
   const handleSignin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            userId: data.userId,
-            name: data.name,
-            email: data.email,
-            role: data.role,
-          })
-        );
-        localStorage.setItem("userId", data.userId);
-        setIsAuthenticated(true);
-
-        // Role-based redirect
-        if (data.role === "buyer") {
-          navigate("/buyer-dashboard");
-        } else if (data.role === "seller") {
-          navigate("/seller-dashboard");
-        } else {
-          navigate("/");
-        }
-      } else {
-        setError(data.error || "Login failed. Check credentials.");
+      // Clean up any old data first
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      
+      // Use the auth API for login
+      const response = await authAPI.login(email, password);
+      
+      // Check for user data and token
+      if (!response.data || !response.data.user) {
+        throw new Error("Invalid response from server");
       }
+      
+      // Check preset role if provided
+      if (presetRole && response.data.user.role !== presetRole) {
+        setError(`This login is only for ${presetRole}s`);
+        setLoading(false);
+        return;
+      }
+      
+      // Extract user data
+      const userData = {
+        userId: response.data.user._id || response.data.user.id,
+        name: response.data.user.name || "",
+        email: response.data.user.email || "",
+        role: response.data.user.role || "user",
+        profilePic: response.data.user.profilePic || ""
+      };
+      
+      // Update authentication state
+      if (typeof setIsAuthenticated === 'function') {
+        setIsAuthenticated(true);
+      }
+      
+      // Call onLogin prop with user data if provided
+      if (typeof onLogin === 'function') {
+        onLogin(userData);
+      }
+      
+      // Navigate to home page
+      navigate("/");
+      
     } catch (err) {
-      setError("Server error. Please try again.");
+      console.error("Login error:", err);
+      
+      // Handle specific error scenarios
+      if (err.response) {
+        // API error responses
+        if (err.response.status === 401) {
+          setError("Invalid email or password. Please try again.");
+        } else if (err.response.status === 404) {
+          setError("User not found. Please check your email.");
+        } else if (err.response.status === 400) {
+          setError("Invalid login request. Please check your details.");
+        } else if (err.response.status >= 500) {
+          setError("Server error. Please try again later.");
+        } else {
+          setError(err.response.data?.error || "Login failed. Please check your credentials.");
+        }
+      } else if (err.request) {
+        // No response received
+        setError("Server not responding. Please check your connection.");
+      } else {
+        // Other errors
+        setError("An error occurred during login. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // 🧠 If forgot password is toggled, show that instead of Signin form
   if (showForgotPassword) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="card p-4 shadow-lg" style={{ width: "400px" }}>
+      <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(135deg, #222831 0%, #393E46 100%)" }}>
+        <div className="card p-4 shadow-lg" style={{ width: "400px", borderRadius: "15px", border: "none" }}>
           <button
-            className="btn btn-link text-start p-0 mb-3"
+            className="btn btn-link text-start p-0 mb-3 text-decoration-none"
+            style={{ color: "#00ADB5" }}
             onClick={() => setShowForgotPassword(false)}
           >
             ← Back to Sign In
@@ -77,53 +118,84 @@ const Signin = ({ setIsAuthenticated, presetRole = "" }) => {
   }
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="card p-4 shadow-lg" style={{ width: "350px" }}>
-        <h2 className="text-center mb-4">Sign In</h2>
+    <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(135deg, #222831 0%, #393E46 100%)" }}>
+      <div className="card p-4 shadow-lg" style={{ width: "400px", borderRadius: "15px", border: "none" }}>
+        <h2 className="text-center mb-4" style={{ color: "#00ADB5" }}>
+          <FaSignInAlt className="me-2" />
+          {presetRole ? `${presetRole.charAt(0).toUpperCase() + presetRole.slice(1)} Login` : "Sign In"}
+        </h2>
+
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSignin}>
           <div className="mb-3">
-            <label className="form-label">Email</label>
+            <label htmlFor="email" className="form-label d-flex align-items-center">
+              <FaEnvelope className="me-2" />
+              Email
+            </label>
             <input
               type="email"
               className="form-control"
-              placeholder="Enter email"
+              id="email"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
+
           <div className="mb-3">
-            <label className="form-label">Password</label>
+            <label htmlFor="password" className="form-label d-flex align-items-center">
+              <FaLock className="me-2" />
+              Password
+            </label>
             <input
               type="password"
               className="form-control"
-              placeholder="Enter password"
+              id="password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          {error && <p className="text-danger">{error}</p>}
+
+          <button
+            type="button"
+            className="btn btn-link p-0 mb-3"
+            onClick={() => setShowForgotPassword(true)}
+            style={{ color: "#00ADB5" }}
+          >
+            Forgot password?
+          </button>
+
           <button
             type="submit"
-            className="btn btn-primary w-100"
+            className="btn btn-primary w-100 mb-3"
+            style={{ backgroundColor: "#00ADB5", borderColor: "#00ADB5" }}
             disabled={loading}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? (
+              <span>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Signing in...
+              </span>
+            ) : (
+              "Sign In"
+            )}
           </button>
-        </form>
 
-        <p className="text-center mt-3">
-          <button
-            className="btn btn-link text-decoration-none p-0"
-            onClick={() => setShowForgotPassword(true)}
-          >
-            Forgot Password?
-          </button>
-        </p>
-        <p className="text-center">
-          Don't have an account? <a href="/signup">Sign Up</a>
-        </p>
+          <div className="text-center">
+            <span>Don't have an account? </span>
+            <Link to="/signup" style={{ color: "#00ADB5" }}>
+              Sign up
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );

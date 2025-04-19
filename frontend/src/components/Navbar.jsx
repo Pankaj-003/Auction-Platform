@@ -1,45 +1,106 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../Navbar.css";
+import { authAPI, handleLogout } from "../api";
 
-const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
+const Navbar = ({ isAuthenticated, user, onLogout }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Load user from localStorage
+  // Load user from props or localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
-
-    if (storedUser && token) {
-      const parsedUser = JSON.parse(storedUser);
-      setUserProfile(parsedUser);
-      setIsAuthenticated(true);
+    if (user) {
+      setUserProfile(user);
+    } else if (isAuthenticated) {
+      // If not provided via props, try to load from localStorage
+      const storedUser = localStorage.getItem("user");
+      
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUserProfile(parsedUser);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
     } else {
-      setIsAuthenticated(false);
+      setUserProfile(null);
     }
-  }, [setIsAuthenticated]);
+  }, [user, isAuthenticated]);
 
-  // Logout
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
+  // Logout handler - use provided handler or default implementation
+  const handleLogoutClick = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      // Default logout if no handler provided
+      handleLogout();
+    }
     setShowDropdown(false);
-    navigate("/signin");
+  };
+
+  // Function to fetch user profile from MongoDB
+  const fetchUserProfile = async (userId) => {
+    try {
+      const response = await authAPI.getUserProfile(userId);
+      
+      if (response.data) {
+        // Update only the userProfile state with the latest data
+        setUserProfile(prev => ({
+          ...prev,
+          userId: userId,
+          profilePic: response.data.profilePic,
+          name: response.data.name,
+          email: response.data.email,
+          role: response.data.role
+        }));
+        
+        // Also update localStorage with the latest profile data
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+        localStorage.setItem("user", JSON.stringify({
+          ...storedUser,
+          userId: userId,
+          profilePic: response.data.profilePic,
+          name: response.data.name,
+          email: response.data.email,
+          role: response.data.role
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    // Force check localStorage for token in case state is out of sync
+    const token = localStorage.getItem("token");
+    console.log("Profile click - Token exists:", !!token);
+    
+    if (!token) {
+      console.warn("No token found, redirecting to signin");
+      navigate("/signin");
+      return;
+    }
+    
+    // Just navigate to profile
+    console.log("Navigating to profile page");
+    navigate("/profile", { replace: true });
     setShowDropdown(false);
   };
 
   const toggleDropdown = () => {
+    // Force check localStorage for token in case state is out of sync
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      navigate("/signin");
+      return;
+    }
+    
     setShowDropdown((prev) => !prev);
   };
 
@@ -105,33 +166,37 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
 
             {isAuthenticated ? (
               <li className="nav-item position-relative" ref={dropdownRef}>
-              <img
-  src={
-    userProfile?.profilePic
-      ? userProfile.profilePic.startsWith("http")
-        ? userProfile.profilePic
-        : `http://localhost:8000/${userProfile.profilePic.replace(/^\/+/, "")}`
-      : "https://ui-avatars.com/api/?name=User&background=random"
-  }
-  alt={userProfile?.name || "User"}
-  className="rounded-circle"
-  style={{
-    width: "35px",
-    height: "35px",
-    marginLeft: "15px",
-    cursor: "pointer",
-    objectFit: "cover",
-    border: "2px solid #ddd",
-  }}
-  onClick={toggleDropdown}
-  title={userProfile?.name || "Profile"}
-  onError={(e) => {
-    e.target.onerror = null;
-    e.target.src = "https://ui-avatars.com/api/?name=User&background=random";
-  }}
-/>
-
-
+                <div 
+                  className="d-flex align-items-center" 
+                  onClick={toggleDropdown}
+                  style={{ cursor: "pointer" }}
+                >
+                  <img
+                    src={
+                      userProfile?.profilePic
+                        ? userProfile.profilePic.startsWith("http")
+                          ? userProfile.profilePic
+                          : `http://localhost:8000/${userProfile.profilePic.replace(/^\/+/, "")}`
+                        : `https://ui-avatars.com/api/?name=${userProfile?.name || "User"}&background=random`
+                    }
+                    alt="Profile"
+                    className="rounded-circle profile-image"
+                    style={{
+                      marginLeft: "5px",
+                      objectFit: "cover",
+                    }}
+                    title="Your Profile"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${userProfile?.name || "User"}&background=random`;
+                    }}
+                  />
+                  {userProfile?.name && (
+                    <span className="ms-2 text-white">
+                      {userProfile.name.split(' ')[0]}
+                    </span>
+                  )}
+                </div>
 
                 {showDropdown && (
                   <div
@@ -140,7 +205,6 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
                       right: 0,
                       top: "45px",
                       minWidth: "140px",
-                      boxShadow: "0px 4px 12px rgba(0,0,0,0.1)",
                     }}
                   >
                     <button className="dropdown-item" onClick={handleProfileClick}>
@@ -148,7 +212,7 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
                     </button>
                     <button
                       className="dropdown-item text-danger"
-                      onClick={handleLogout}
+                      onClick={handleLogoutClick}
                     >
                       Logout
                     </button>
@@ -157,7 +221,7 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated }) => {
               </li>
             ) : (
               <li className="nav-item ms-2">
-                <Link className="btn btn-light login-btn" to="/signin">
+                <Link className="btn login-btn" to="/signin">
                   Login
                 </Link>
               </li>
