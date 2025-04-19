@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
 import nodemailer from "nodemailer";
+import path from "path";
 
 import authRoutes from "./routes/authRoutes.js";
 import auctionRoutes from "./routes/auctionRoutes.js";
@@ -42,6 +43,9 @@ app.use("/api/bids", bidRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
 
+// Serve uploads folder
+app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
+
 // API route to get all auctions with winner's name populated
 app.get("/api/auctions", async (req, res) => {
   try {
@@ -54,6 +58,26 @@ app.get("/api/auctions", async (req, res) => {
   }
 });
 
+// API route to fetch user profile (including the profile picture)
+app.get("/api/user/:id", async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    // Return user profile data, including the profile picture path
+    res.json({
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic ? `/uploads/${user.profilePic}` : null,
+    });
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    res.status(500).send("Error fetching user profile");
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 8000;

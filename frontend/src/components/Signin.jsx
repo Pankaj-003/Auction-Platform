@@ -2,14 +2,18 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ForgotPassword from "./ForgotPassword"; // adjust the path if needed
 
-const Signin = ({ setIsAuthenticated }) => {
+const Signin = ({ setIsAuthenticated, presetRole = "" }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false); // 👈 toggle state
-
+  if (presetRole && data.role !== presetRole) {
+    setError(`This login is only for ${presetRole}s`);
+    return;
+  }
+  
   const handleSignin = async (e) => {
     e.preventDefault();
     setError("");

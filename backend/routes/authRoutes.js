@@ -1,157 +1,186 @@
-import express from "express";
-import bcrypt from "bcryptjs";
-import User from "../models/User.js";
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import User from '../models/User.js';
+import { upload } from '../middleware/upload.js'; // Import the upload middleware
 
-dotenv.config(); // Load environment variables from .env file
-
+dotenv.config();
 const router = express.Router();
 
-// Nodemailer setup (secure, using .env)
+// Nodemailer Config for sending emails
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER, // Gmail address from .env
-    pass: process.env.EMAIL_PASS, // App Password from .env
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false,  // Optional: to bypass SSL certificate issues
+    rejectUnauthorized: false,
   },
 });
 
-// ✅ Signup Route
-router.post("/signup", async (req, res) => {
+// Signup Route (with file upload)
+router.post('/signup', upload.single('profilePic'), async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+    // Check for required fields and profile picture
+    if (!name || !email || !password || !role || !req.file) {
+      return res.status(400).json({ error: 'All fields including profile picture are required' });
     }
 
+    // Check if the email is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
+      return res.status(409).json({ error: 'User already exists' });
     }
 
+    // Hash the password before saving it to the database
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword });
-    await user.save();
 
-    res.status(201).json({ message: "User registered successfully", user });
+    // Create the new user
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      profilePic: `uploads/${req.file.filename}`,  // Store the profile picture path
+    });
+
+    // Save the new user to the database
+    await newUser.save();
+
+    // Send success response with user data
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        profilePic: newUser.profilePic,
+      },
+    });
   } catch (error) {
-    console.error("Signup Error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error('Signup Error:', error);
+    res.status(500).json({ error: 'Server error during signup' });
   }
 });
 
-// ✅ Login Route
-router.post("/login", async (req, res) => {
+// Login Route
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Ensure email and password are provided
     if (!email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    // Find the user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: "User not found. Please sign up first." });
+      return res.status(404).json({ error: 'User not found' });
     }
 
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Send success response with user info (including profile pic)
     res.status(200).json({
-      message: "Login successful",
-      userId: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      message: 'Login successful',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic,
+      },
     });
   } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error('Login Error:', error);
+    res.status(500).json({ error: 'Server error during login' });
   }
 });
 
-// ✅ Forgot Password Route
-router.post("/forgot-password", async (req, res) => {
+// Forgot Password Route
+router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   try {
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
+    if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?email=${encodeURIComponent(email)}`;
 
-    
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Password Reset Request",
+      subject: 'Password Reset Request',
       html: `
         <p>Hello ${user.name},</p>
-        <p>Click the button below to reset your password:</p>
+        <p>Click below to reset your password:</p>
         <a href="${resetLink}" style="padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
           Reset Password
         </a>
         <p>If you did not request this, you can ignore this email.</p>
       `,
     };
-    
+
     await transporter.sendMail(mailOptions);
 
-    res.status(200).json({ message: "Password reset link has been sent to your email." });
-  } catch (err) {
-    console.error("Forgot Password Error:", err);
-    res.status(500).json({ error: "Something went wrong." });
+    res.status(200).json({ message: 'Password reset link sent to your email.' });
+  } catch (error) {
+    console.error('Forgot Password Error:', error);
+    res.status(500).json({ error: 'Failed to send reset email.' });
   }
 });
 
-// ✅ Reset Password Route
-router.post("/reset-password", async (req, res) => {
+// Reset Password Route
+router.post('/reset-password', async (req, res) => {
   const { email, newPassword } = req.body;
 
   try {
     if (!email || !newPassword) {
-      return res.status(400).json({ error: "Email and new password are required" });
+      return res.status(400).json({ error: 'Email and new password are required' });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Save the new password to the user's account
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.status(200).json({ message: "Password has been successfully reset" });
-  } catch (err) {
-    console.error("Reset Password Error:", err);
-    res.status(500).json({ error: "Failed to reset password. Please try again later." });
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Reset Password Error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 
-// Verify Nodemailer Transporter (optional for debugging)
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("Nodemailer Error:", error);
-  } else {
-    console.log("Server is ready to take our messages.");
+// Get User Info by ID (to show profile pic in navbar)
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePic: user.profilePic,
+    });
+  } catch (err) {
+    console.error('Fetch User Error:', err);
+    res.status(500).json({ message: 'Error fetching user' });
   }
 });
 

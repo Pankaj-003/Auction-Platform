@@ -33,6 +33,8 @@ const App = () => {
             <Route path="/mybids" element={<MyBids />} />
             <Route path="/winners" element={<Winners />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/buyer-login" element={<Signin presetRole="buyer" setIsAuthenticated={setIsAuthenticated} />} />
+<Route path="/seller-login" element={<Signin presetRole="seller" setIsAuthenticated={setIsAuthenticated} />} />
 
           </Routes>
         </div>
