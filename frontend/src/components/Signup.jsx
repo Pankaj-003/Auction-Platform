@@ -4,19 +4,24 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { FaCamera, FaEnvelope, FaLock, FaUser, FaUserTag, FaUserPlus } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "../signup.css";
+import "../styles/signup.css";
 import axios from "axios";
+import { useTheme } from "../context/ThemeProvider";
+
+const API_BASE_URL = "http://localhost:8000";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "buyer",
     profilePic: null,
+    role: "unset" // Adding default role
   });
 
   const [loading, setLoading] = useState(false);
@@ -42,29 +47,17 @@ const Signup = () => {
   // Check if email already exists in MongoDB before submission
   const checkEmailExists = async (email) => {
     try {
-      // Try first API endpoint
       const response = await axios.post(
-        "http://localhost:8000/api/users/check-email",
+        `${API_BASE_URL}/api/auth/check-email`,
         { email },
         { headers: { "Content-Type": "application/json" }}
       );
       
       return response.data.exists;
     } catch (err) {
-      // If first endpoint fails, try alternative endpoint
-      try {
-        const altResponse = await axios.post(
-          "http://localhost:8000/api/auth/check-email",
-          { email },
-          { headers: { "Content-Type": "application/json" }}
-        );
-        
-        return altResponse.data.exists;
-      } catch (altErr) {
-        // If both endpoints fail, assume we need to continue with signup
-        console.error("Could not check email existence:", altErr);
-        return false;
-      }
+      console.error("Error checking email:", err);
+      // Continue with signup even if email check fails
+      return false;
     }
   };
 
@@ -76,6 +69,13 @@ const Signup = () => {
         toast.error("Only JPEG, JPG, or PNG files are allowed.");
         return;
       }
+      
+      // Check file size (limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image file size must be less than 2MB.");
+        return;
+      }
+      
       setForm((prev) => ({ ...prev, profilePic: file }));
       setPreview(URL.createObjectURL(file));
     }
@@ -119,131 +119,120 @@ const Signup = () => {
       formData.append("email", form.email);
       formData.append("password", form.password);
       formData.append("role", form.role);
+      
+      // Only append profile picture if one was selected
       if (form.profilePic) {
         formData.append("profilePic", form.profilePic);
       }
 
+      // Debugging
+      console.log("Form data being sent:", {
+        name: form.name,
+        email: form.email,
+        role: form.role,
+        hasProfilePic: !!form.profilePic
+      });
+
+      // Use a single endpoint with better error handling
       try {
-        // Try the first endpoint
         const response = await axios.post(
-          "http://localhost:8000/api/auth/signup",
+          `${API_BASE_URL}/api/auth/signup`, 
           formData,
-          { headers: { "Content-Type": "multipart/form-data" }}
+          { 
+            headers: { "Content-Type": "multipart/form-data" },
+            timeout: 10000 // 10 second timeout
+          }
         );
         
         if (response.data) {
-          toast.success("Signup successful! Please log in.");
+          toast.success("Signup successful! Redirecting to login page.");
           setTimeout(() => navigate("/signin"), 2000);
         }
-      } catch (mainError) {
-        // If first endpoint fails, try alternative endpoint
-        try {
-          const altResponse = await axios.post(
-            "http://localhost:8000/api/users/signup",
-            formData,
-            { headers: { "Content-Type": "multipart/form-data" }}
-          );
-          
-          if (altResponse.data) {
-            toast.success("Signup successful! Please log in.");
-            setTimeout(() => navigate("/signin"), 2000);
-          }
-        } catch (altError) {
-          // Handle specific MongoDB error cases
-          if (altError.response && altError.response.data) {
-            if (altError.response.data.error && altError.response.data.error.includes('duplicate key')) {
-              setEmailError("This email is already registered. Please use a different email.");
-              toast.error("Email already exists. Please use a different email.");
-            } else {
-              toast.error(altError.response.data.error || "Signup failed. Try again.");
+      } catch (error) {
+        console.error("Signup request failed:", error);
+        
+        // Detailed error handling
+        if (error.code === 'ECONNABORTED') {
+          toast.error("Request timed out. Please check your internet connection and try again.");
+        } else if (!error.response) {
+          toast.error("Cannot connect to server. Please check your internet connection.");
+        } else if (error.response.status === 409) {
+          setEmailError("This email is already registered. Please use a different email.");
+          toast.error("Email already exists. Please use a different email.");
+        } else if (error.response.status === 400) {
+          toast.error(error.response.data.error || "Please check your information and try again.");
+        } else if (error.response.status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else {
+          // Try alternative endpoint as fallback
+          try {
+            const altResponse = await axios.post(
+              `${API_BASE_URL}/api/users/signup`,
+              formData,
+              { 
+                headers: { "Content-Type": "multipart/form-data" },
+                timeout: 10000
+              }
+            );
+            
+            if (altResponse.data) {
+              toast.success("Signup successful! Redirecting to login page.");
+              setTimeout(() => navigate("/signin"), 2000);
+              return;
             }
-          } else {
-            toast.error("Signup failed. Please try again.");
+          } catch (altError) {
+            console.error("Alternative signup attempt failed:", altError);
+            
+            if (altError.response && altError.response.data && altError.response.data.error) {
+              if (altError.response.data.error.includes('duplicate key') || 
+                  altError.response.data.error.includes('E11000')) {
+                setEmailError("This email is already registered. Please use a different email.");
+                toast.error("Email already exists. Please use a different email.");
+              } else {
+                toast.error(altError.response.data.error);
+              }
+            } else {
+              toast.error("Signup failed. Please try again later.");
+            }
           }
         }
       }
     } catch (err) {
-      console.error("Signup error:", err);
-      
-      // Check for MongoDB duplicate key error (E11000)
-      if (err.response && err.response.data && 
-          (err.response.data.error?.includes('duplicate key') || 
-           err.response.data.error?.includes('E11000'))) {
-        setEmailError("This email is already registered. Please use a different email.");
-        toast.error("Email already exists. Please use a different email.");
-      } else {
-        toast.error("Server error. Please try again later.");
-      }
+      console.error("Signup process error:", err);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div 
-      className="d-flex justify-content-center align-items-center vh-100" 
-      style={{ background: "linear-gradient(135deg, #222831 0%, #393E46 100%)" }}
-    >
-      <div 
-        className="card p-4 shadow-lg" 
-        style={{ 
-          width: "400px", 
-          borderRadius: "15px", 
-          border: "none", 
-          background: "#EEEEEE" 
-        }}
-      >
-        <div className="text-center mb-3">
-          <h2 style={{ color: "#222831", fontWeight: "bold" }}>Create Account</h2>
-          <p className="text-muted">Join the AuctionHub community</p>
+    <div className={`auth-container ${isDark ? 'dark' : 'light'}`}>
+      <div className="auth-card">
+        <div className="text-center mb-4">
+          <h2 className="auth-title">Create Account</h2>
+          <p className="auth-subtitle">Join the AuctionHub community</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Profile Picture Upload Section */}
           <div className="d-flex justify-content-center mb-4">
-            <div
-              className="position-relative"
-              style={{
-                width: "120px",
-                height: "120px",
-                borderRadius: "50%",
-                backgroundColor: preview ? "#f0f0f0" : "#00ADB5",
-                overflow: "hidden",
-                border: "2px solid #00ADB5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-              }}
-            >
+            <div className="profile-upload-container">
               {preview ? (
                 <img
                   src={preview}
                   alt="profile"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  className="profile-preview"
                 />
               ) : (
-                <FaUser color="white" size={40} />
+                <div className="profile-placeholder">
+                  <FaUser size={40} />
+                </div>
               )}
               <label
                 htmlFor="profileUpload"
-                className="position-absolute"
-                style={{
-                  bottom: "5px",
-                  right: "5px",
-                  backgroundColor: "#222831",
-                  borderRadius: "50%",
-                  padding: "8px",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-                  border: "2px solid #EEEEEE",
-                }}
+                className="camera-icon"
               >
-                <FaCamera color="white" size={12} />
+                <FaCamera size={12} />
               </label>
               <input
                 type="file"
@@ -255,153 +244,104 @@ const Signup = () => {
             </div>
           </div>
 
-          <div className="mb-3 position-relative">
+          <div className="form-group">
             <div className="input-group">
-              <span className="input-group-text" style={{ background: "#00ADB5", border: "none", color: "white" }}>
+              <span className="input-group-icon">
                 <FaUser />
               </span>
               <input
                 type="text"
                 name="name"
-                className="form-control"
+                className="auth-input"
                 placeholder="Full Name"
                 value={form.name}
                 onChange={handleChange}
                 required
-                style={{ 
-                  borderLeft: "none", 
-                  height: "45px", 
-                  background: "#f8f8f8" 
-                }}
               />
             </div>
           </div>
 
-          <div className="mb-3 position-relative">
+          <div className="form-group">
             <div className="input-group">
-              <span className="input-group-text" style={{ background: "#00ADB5", border: "none", color: "white" }}>
+              <span className="input-group-icon">
                 <FaEnvelope />
               </span>
               <input
                 type="email"
                 name="email"
-                className={`form-control ${emailError ? 'is-invalid' : ''}`}
+                className={`auth-input ${emailError ? 'is-invalid' : ''}`}
                 placeholder="Email Address"
                 value={form.email}
                 onChange={handleChange}
                 required
-                style={{ 
-                  borderLeft: "none", 
-                  height: "45px", 
-                  background: "#f8f8f8" 
-                }}
               />
             </div>
             {emailError && (
-              <div className="invalid-feedback d-block mt-1" style={{ color: "#dc3545" }}>
+              <div className="error-message">
                 {emailError}
               </div>
             )}
           </div>
 
-          <div className="mb-3 position-relative">
+          <div className="form-group">
             <div className="input-group">
-              <span className="input-group-text" style={{ background: "#00ADB5", border: "none", color: "white" }}>
+              <span className="input-group-icon">
                 <FaLock />
               </span>
               <input
                 type="password"
                 name="password"
-                className="form-control"
+                className="auth-input"
                 placeholder="Password"
                 value={form.password}
                 onChange={handleChange}
                 required
-                style={{ 
-                  borderLeft: "none", 
-                  height: "45px", 
-                  background: "#f8f8f8" 
-                }}
               />
             </div>
-            <small className="form-text text-muted">
+            <small className="password-requirements">
               Must be at least 8 characters with uppercase, lowercase, number, and special character
             </small>
           </div>
 
-          <div className="mb-3 position-relative">
+          <div className="form-group">
             <div className="input-group">
-              <span className="input-group-text" style={{ background: "#00ADB5", border: "none", color: "white" }}>
+              <span className="input-group-icon">
                 <FaLock />
               </span>
               <input
                 type="password"
                 name="confirmPassword"
-                className="form-control"
+                className="auth-input"
                 placeholder="Confirm Password"
                 value={form.confirmPassword}
                 onChange={handleChange}
                 required
-                style={{ 
-                  borderLeft: "none", 
-                  height: "45px", 
-                  background: "#f8f8f8" 
-                }}
               />
             </div>
           </div>
 
-          <div className="mb-4 position-relative">
-            <div className="input-group">
-              <span className="input-group-text" style={{ background: "#00ADB5", border: "none", color: "white" }}>
-                <FaUserTag />
-              </span>
-              <select
-                name="role"
-                className="form-select"
-                value={form.role}
-                onChange={handleChange}
-                required
-                style={{ 
-                  borderLeft: "none", 
-                  height: "45px", 
-                  background: "#f8f8f8" 
-                }}
-              >
-                <option value="buyer">Buyer</option>
-                <option value="seller">Seller</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="d-grid gap-2 mb-3">
-            <button
-              type="submit"
-              className="btn"
-              disabled={loading}
-              style={{ 
-                background: "#00ADB5", 
-                color: "white", 
-                height: "45px",
-                fontWeight: "500",
-                borderRadius: "6px",
-                fontSize: "16px",
-                transition: "all 0.3s ease"
-              }}
-            >
-              {loading ? (
+          <button
+            type="submit"
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              ) : (
+                Creating Account...
+              </>
+            ) : (
+              <>
                 <FaUserPlus className="me-2" />
-              )}
-              {loading ? "Creating Account..." : "Sign Up"}
-            </button>
-          </div>
+                Sign Up
+              </>
+            )}
+          </button>
 
-          <div className="text-center">
-            <p className="mb-0">
+          <div className="text-center mt-3">
+            <p className="alternate-action">
               Already have an account?{" "}
-              <Link to="/signin" style={{ color: "#00ADB5", fontWeight: "500", textDecoration: "none" }}>
+              <Link to="/signin" className="auth-link">
                 Sign In
               </Link>
             </p>
@@ -410,7 +350,7 @@ const Signup = () => {
       </div>
 
       {/* Toast container */}
-      <ToastContainer position="top-center" autoClose={3000} />
+      <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
     </div>
   );
 };

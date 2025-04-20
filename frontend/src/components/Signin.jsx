@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ForgotPassword from "./ForgotPassword";
 import { FaEnvelope, FaLock, FaSignInAlt } from "react-icons/fa";
-import * as authAPI from "../api/auth";
+import { login } from "../api/auth";
+import { AuthContext } from "../context/AuthContext";
 
-const Signin = ({ setIsAuthenticated, onLogin, presetRole = "" }) => {
+const Signin = ({ presetRole = "" }) => {
   const navigate = useNavigate();
+  const { login: authLogin, isAuthenticated } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,12 +19,11 @@ const Signin = ({ setIsAuthenticated, onLogin, presetRole = "" }) => {
     const user = localStorage.getItem("user");
     const token = localStorage.getItem("token");
     
-    if (user && token) {
+    if (user && token && isAuthenticated) {
       // Already logged in - redirect to home
-      setIsAuthenticated(true);
       navigate("/");
     }
-  }, [navigate, setIsAuthenticated]);
+  }, [navigate, isAuthenticated]);
 
   const handleSignin = async (e) => {
     e.preventDefault();
@@ -33,12 +34,18 @@ const Signin = ({ setIsAuthenticated, onLogin, presetRole = "" }) => {
       // Clean up any old data first
       localStorage.removeItem("user");
       localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      
+      console.log("Starting login process for:", email);
       
       // Use the auth API for login
-      const response = await authAPI.login(email, password);
+      const response = await login(email, password);
+      
+      console.log("Login response received");
       
       // Check for user data and token
       if (!response.data || !response.data.user) {
+        console.error("Invalid response format from server:", response.data);
         throw new Error("Invalid response from server");
       }
       
@@ -58,25 +65,30 @@ const Signin = ({ setIsAuthenticated, onLogin, presetRole = "" }) => {
         profilePic: response.data.user.profilePic || ""
       };
       
-      // Update authentication state
-      if (typeof setIsAuthenticated === 'function') {
-        setIsAuthenticated(true);
-      }
+      // Save user data in localStorage
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("userId", userData.userId);
       
-      // Call onLogin prop with user data if provided
-      if (typeof onLogin === 'function') {
-        onLogin(userData);
-      }
+      console.log("Login successful, saved data:", {
+        token: !!response.data.token,
+        userId: userData.userId,
+        user: userData.name
+      });
+      
+      // Update authentication state using context
+      authLogin(userData);
       
       // Navigate to home page
       navigate("/");
       
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("Login error in Signin.jsx:", err);
       
       // Handle specific error scenarios
       if (err.response) {
         // API error responses
+        console.error("API error response:", err.response.status, err.response.data);
         if (err.response.status === 401) {
           setError("Invalid email or password. Please try again.");
         } else if (err.response.status === 404) {
@@ -90,10 +102,12 @@ const Signin = ({ setIsAuthenticated, onLogin, presetRole = "" }) => {
         }
       } else if (err.request) {
         // No response received
+        console.error("No response from server", err.request);
         setError("Server not responding. Please check your connection.");
       } else {
         // Other errors
-        setError("An error occurred during login. Please try again.");
+        console.error("Other login error:", err.message);
+        setError(err.message || "An error occurred during login. Please try again.");
       }
     } finally {
       setLoading(false);

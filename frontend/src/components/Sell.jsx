@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FaUpload, FaImage, FaTags, FaMoneyBillWave, FaCalendarAlt, FaCheck } from "react-icons/fa";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "../sell.css";
+import "../styles/Sell.css";
 import { useAlert } from "./AlertProvider";
 
 const Sell = ({ onAddItem }) => {

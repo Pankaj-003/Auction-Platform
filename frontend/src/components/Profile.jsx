@@ -1,78 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaCamera, FaSave, FaGavel, FaEye, FaHistory, FaTrophy, FaHeart, FaBell } from "react-icons/fa";
-import { authAPI } from "../api";
-import { checkAuth } from "../api/auth";
-import "../Profile.css";
+import { FaUser, FaEnvelope, FaCamera, FaSave, FaGavel, FaEye, FaHistory, FaTrophy, FaHeart, FaBell, FaUserTag, FaStore } from "react-icons/fa";
+import { getUserProfile, updateProfile } from "../api/auth";
+import "../styles/Profile.css";
+import { AuthContext } from "../context/AuthContext";
+import RoleSelector from "./RoleSelector";
+import { checkAuth } from "../utils/authUtils";
 
-const Profile = ({ setIsAuthenticated }) => {
+const Profile = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user: contextUser, logout } = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
+  const [profileStats, setProfileStats] = useState(null);
+  const [activeBids, setActiveBids] = useState([]);
+  const [wonAuctions, setWonAuctions] = useState([]);
+  const [userListings, setUserListings] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [fetchStatus, setFetchStatus] = useState({ tried: false, success: false });
-  const [showRawData, setShowRawData] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
-  
-  // Mock auction data for demonstration
-  const [auctionStats] = useState({
-    bidsPlaced: 12,
-    activeAuctions: 3,
-    wonAuctions: 2,
-    watchlistCount: 5
-  });
-  
-  // Mock watchlist data for demonstration
-  const [watchlist] = useState([
-    {
-      id: 1,
-      title: "Vintage Camera",
-      image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=100",
-      currentBid: 5200,
-      endTime: new Date(Date.now() + 86400000), // 1 day from now
-    },
-    {
-      id: 2,
-      title: "Antique Watch",
-      image: "https://images.unsplash.com/photo-1524592094857-4f23a29cff92?q=80&w=100",
-      currentBid: 7800,
-      endTime: new Date(Date.now() + 172800000), // 2 days from now
-    },
-    {
-      id: 3,
-      title: "Collectible Coins",
-      image: "https://images.unsplash.com/photo-1605792657660-596af9009e82?q=80&w=100",
-      currentBid: 3500,
-      endTime: new Date(Date.now() + 259200000), // 3 days from now
-    }
-  ]);
-  
-  // Mock activity data for demonstration
-  const [activities] = useState([
-    {
-      id: 1,
-      type: "bid",
-      title: "You placed a bid on Vintage Camera",
-      time: new Date(Date.now() - 3600000), // 1 hour ago
-      icon: <FaGavel />
-    },
-    {
-      id: 2,
-      type: "win",
-      title: "You won the auction for Antique Vase",
-      time: new Date(Date.now() - 86400000), // 1 day ago
-      icon: <FaTrophy />
-    },
-    {
-      id: 3,
-      type: "watchlist",
-      title: "You added Rare Stamps to your watchlist",
-      time: new Date(Date.now() - 172800000), // 2 days ago
-      icon: <FaHeart />
-    }
-  ]);
   
   // Form state
   const [name, setName] = useState("");
@@ -81,213 +29,212 @@ const Profile = ({ setIsAuthenticated }) => {
   const [previewUrl, setPreviewUrl] = useState("");
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      setFetchStatus({ tried: true, success: false });
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem("token");
-        console.log("Token exists:", !!token);
+    fetchUserData();
+  }, []);
+  
+  const fetchUserData = async () => {
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("No authentication token found");
+        logout();
+        navigate("/signin");
+        return;
+      }
+      
+      // Get userId from localStorage
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        console.warn("No userId found");
+        logout();
+        navigate("/signin");
+        return;
+      }
+      
+      // Get initial user data from localStorage
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUserData(parsedUser);
+        setName(parsedUser.name || "");
+        setEmail(parsedUser.email || "");
         
-        if (!token) {
-          // No token means not authenticated
-          console.warn("No authentication token found");
-          setIsAuthenticated(false);
-          navigate("/signin");
-          return;
-        }
-        
-        // Get user data from localStorage
-        const storedUser = localStorage.getItem("user");
-        console.log("Stored user exists:", !!storedUser);
-        
-        // Attempt to parse the user data
-        let user = {};
-        try {
-          if (storedUser) {
-            user = JSON.parse(storedUser);
-            console.log("Parsed user data from localStorage", { userId: user.userId, name: user.name });
-            
-            // Set initial user data from localStorage
-            setUserData(user);
-            setName(user.name || "");
-            setEmail(user.email || "");
-            
-            if (user.profilePic) {
-              const localProfilePic = user.profilePic.startsWith("http")
-                ? user.profilePic
-                : `http://localhost:8000/${user.profilePic.replace(/^\/+/, "")}`;
-              setPreviewUrl(localProfilePic);
-              console.log("Set profile picture from localStorage");
-            }
-          }
-        } catch (parseError) {
-          console.error("Error parsing user data:", parseError);
-        }
-        
-        // If we don't have a user ID, try to validate the token
-        if (!user.userId) {
-          console.log("No userId in localStorage, validating token...");
-          try {
-            // Use the directly imported checkAuth function instead of authAPI.checkAuth
-            const authStatus = await checkAuth();
-            console.log("Auth check result:", authStatus);
-            
-            if (!authStatus.authenticated) {
-              throw new Error("Not authenticated");
-            }
-            
-            // If we have user data from validation, use it
-            if (authStatus.user) {
-              console.log("Got user data from auth check:", authStatus.user);
-              user = authStatus.user;
-              user.userId = user._id;
-              setUserData(user);
-              
-              if (user.name) setName(user.name);
-              if (user.email) setEmail(user.email);
-              
-              // Update localStorage
-              localStorage.setItem("user", JSON.stringify(user));
-              console.log("Updated localStorage with user data from auth check");
-            } else {
-              throw new Error("No user data from auth check");
-            }
-          } catch (authError) {
-            console.error("Auth validation error:", authError);
-            
-            // Fallback: Try to parse userId from token if possible
-            const storedUser = localStorage.getItem("user");
-            if (storedUser) {
-              try {
-                const parsedUser = JSON.parse(storedUser);
-                if (parsedUser.userId || parsedUser._id) {
-                  console.log("Using userId from localStorage as fallback");
-                  user.userId = parsedUser.userId || parsedUser._id;
-                } else {
-                  console.error("No userId in stored user data");
-                  setIsAuthenticated(false);
-                  navigate("/signin");
-                  return;
-                }
-              } catch (e) {
-                console.error("Failed to parse user data:", e);
-                setIsAuthenticated(false);
-                navigate("/signin");
-                return;
-              }
-            } else {
-              console.error("No stored user data available");
-              setIsAuthenticated(false);
-              navigate("/signin");
-              return;
-            }
-          }
-        }
-        
-        // Fetch detailed user data if we have a userId
-        if (user.userId) {
-          console.log("Fetching detailed profile for userId:", user.userId);
-          try {
-            const response = await authAPI.getUserProfile(user.userId);
-            
-            if (response && response.data) {
-              console.log("Got profile data from API:", response.data);
-              
-              // Update state with server data
-              setUserData(response.data);
-              setName(response.data.name || "");
-              setEmail(response.data.email || "");
-              
-              // Update profile picture if available
-              if (response.data.profilePic) {
-                const profilePicUrl = response.data.profilePic.startsWith("http")
-                  ? response.data.profilePic
-                  : `http://localhost:8000/${response.data.profilePic.replace(/^\/+/, "")}`;
-                setPreviewUrl(profilePicUrl);
-                console.log("Updated profile picture from API");
-              }
-              
-              setFetchStatus({ tried: true, success: true });
-              console.log("Profile data fetch successful");
-            } else {
-              console.error("No data received from profile API");
-              setError("Could not fetch profile data");
-            }
-          } catch (profileError) {
-            // Use data we have from localStorage if profile fetch fails
-            console.error("Error fetching profile data:", profileError);
-            setError(`Could not fetch latest profile data: ${profileError.message}`);
-          }
-        } else {
-          // No user ID, redirect to login
-          console.warn("No userId available after all attempts");
-          setIsAuthenticated(false);
-          navigate("/signin");
-          return;
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error("Error in profile page:", err);
-        // Handle severe errors by redirecting to login
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          console.warn("Authentication error:", err.response.status);
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
-          setIsAuthenticated(false);
-          navigate("/signin");
-        } else {
-          // For other errors, show error but don't redirect
-          setError(`Error loading profile: ${err.message}`);
-          setLoading(false);
+        if (parsedUser.profilePic) {
+          const localProfilePic = parsedUser.profilePic.startsWith("http")
+            ? parsedUser.profilePic
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${parsedUser.profilePic.replace(/^\/+/, "")}`;
+          setPreviewUrl(localProfilePic);
         }
       }
-    };
-    
-    fetchUserData();
-  }, [navigate, setIsAuthenticated]);
+      
+      // Fetch user profile from API
+      const response = await getUserProfile(userId);
+      if (response && response.data) {
+        setUserData(response.data);
+        setName(response.data.name || "");
+        setEmail(response.data.email || "");
+        
+        if (response.data.profilePic) {
+          const profilePicUrl = response.data.profilePic.startsWith("http")
+            ? response.data.profilePic
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${response.data.profilePic.replace(/^\/+/, "")}`;
+          setPreviewUrl(profilePicUrl);
+        }
+      }
+      
+      // Fetch profile summary data
+      fetchProfileSummary(userId);
+      
+    } catch (error) {
+      console.error("Error in profile page:", error);
+      setError(`Error loading profile: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchProfileSummary = async (userId) => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${apiBaseUrl}/api/profile/summary/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile summary');
+      }
+      
+      const data = await response.json();
+      setProfileStats(data.stats);
+      setRecentActivity(data.recentActivity);
+      
+      // Fetch additional data based on the active tab
+      if (activeTab === 'auctions') {
+        fetchUserBids(userId);
+      } else if (activeTab === 'watchlist') {
+        fetchWonAuctions(userId);
+      } else if (activeTab === 'listings') {
+        fetchUserListings(userId);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching profile summary:", error);
+      setError(`Error fetching profile data: ${error.message}`);
+    }
+  };
+  
+  const fetchUserBids = async (userId) => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${apiBaseUrl}/api/profile/active-bids/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch active bids');
+      }
+      
+      const data = await response.json();
+      setActiveBids(data);
+      
+    } catch (error) {
+      console.error("Error fetching active bids:", error);
+    }
+  };
+  
+  const fetchWonAuctions = async (userId) => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${apiBaseUrl}/api/profile/won-auctions/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch won auctions');
+      }
+      
+      const data = await response.json();
+      setWonAuctions(data);
+      
+    } catch (error) {
+      console.error("Error fetching won auctions:", error);
+    }
+  };
+  
+  const fetchUserListings = async (userId) => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${apiBaseUrl}/api/profile/listings/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user listings');
+      }
+      
+      const data = await response.json();
+      setUserListings(data);
+      
+    } catch (error) {
+      console.error("Error fetching user listings:", error);
+    }
+  };
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
+    if (updating) return;
+    
     setUpdating(true);
-    setError("");
     setSuccess("");
+    setError("");
     
     try {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      
-      if (!storedUser || !storedUser.userId) {
-        setError("Authentication issue. Please login again.");
-        setUpdating(false);
-        setTimeout(() => {
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
-          setIsAuthenticated(false);
-          navigate("/signin");
-        }, 2000);
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        setError("User ID not found. Please log in again.");
+        logout();
         return;
       }
       
       // Prepare update data
       const updateData = {
         name,
-        email,
-        // Only include profilePic if a new one was selected
         profilePic: profilePic || undefined
       };
       
       // Use API utility to update profile
-      const response = await authAPI.updateProfile(storedUser.userId, updateData);
+      const response = await updateProfile(userId, updateData);
       
       if (response.data) {
         // Update localStorage with new user data
+        const storedUser = JSON.parse(localStorage.getItem("user") || '{}');
         localStorage.setItem(
           "user",
           JSON.stringify({
             ...storedUser,
             name: name,
-            email: email,
-            profilePic: response.data.profilePic,
+            profilePic: response.data.profilePic
           })
         );
         
@@ -295,7 +242,6 @@ const Profile = ({ setIsAuthenticated }) => {
         setUserData(prev => ({
           ...prev,
           name: name,
-          email: email,
           profilePic: response.data.profilePic
         }));
         
@@ -305,7 +251,7 @@ const Profile = ({ setIsAuthenticated }) => {
         if (response.data.profilePic) {
           const profilePicUrl = response.data.profilePic.startsWith("http")
             ? response.data.profilePic
-            : `http://localhost:8000/${response.data.profilePic.replace(/^\/+/, "")}`;
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${response.data.profilePic.replace(/^\/+/, "")}`;
           setPreviewUrl(profilePicUrl);
         }
       } else {
@@ -313,20 +259,9 @@ const Profile = ({ setIsAuthenticated }) => {
       }
     } catch (err) {
       console.error("Error updating profile:", err);
-      if (err.response && err.response.status === 401) {
-        setError("Session expired. Please login again.");
-        setTimeout(() => {
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
-          setIsAuthenticated(false);
-          navigate("/signin");
-        }, 2000);
-      } else {
-        setError(err.response?.data?.error || "Failed to update profile");
-      }
+      setError(err.response?.data?.error || "Failed to update profile");
     } finally {
       setUpdating(false);
-      // Clear the file input after update
       setProfilePic(null);
     }
   };
@@ -344,14 +279,12 @@ const Profile = ({ setIsAuthenticated }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsAuthenticated(false);
+    logout();
     navigate("/signin");
   };
   
   const formatTimeAgo = (date) => {
-    const seconds = Math.floor((new Date() - date) / 1000);
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
     
     let interval = seconds / 31536000;
     if (interval > 1) return Math.floor(interval) + " years ago";
@@ -372,7 +305,7 @@ const Profile = ({ setIsAuthenticated }) => {
   };
   
   const formatTimeLeft = (endTime) => {
-    const diff = endTime - new Date();
+    const diff = new Date(endTime) - new Date();
     if (diff <= 0) return "Ended";
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -389,15 +322,11 @@ const Profile = ({ setIsAuthenticated }) => {
 
   if (loading) {
     return (
-      <div 
-        className="d-flex flex-column justify-content-center align-items-center vh-100" 
-        style={{ background: "#121212" }}
-      >
+      <div className="d-flex flex-column justify-content-center align-items-center vh-100" style={{ background: "#121212" }}>
         <div className="spinner-border text-light mb-3" style={{ width: "3rem", height: "3rem" }} role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
         <h5 className="text-light mt-3">Loading your profile...</h5>
-        <p className="text-light-50 small">Please wait while we fetch your data</p>
       </div>
     );
   }
@@ -435,7 +364,7 @@ const Profile = ({ setIsAuthenticated }) => {
               <p className="mb-3 text-muted">{email || "No email set"}</p>
               <div className="d-flex align-items-center mb-3">
                 <span className="badge bg-info me-2">
-                  {userData?.role || JSON.parse(localStorage.getItem("user") || '{}').role || "User"}
+                  {userData?.role || "User"}
                 </span>
                 <span className="text-muted small">Member since {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "Unknown"}</span>
               </div>
@@ -452,28 +381,37 @@ const Profile = ({ setIsAuthenticated }) => {
                 <li className="nav-item">
                   <button 
                     className={`btn ${activeTab === "auctions" ? "btn-primary" : "btn-dark"} me-2`}
-                    onClick={() => setActiveTab("auctions")}
+                    onClick={() => {
+                      setActiveTab("auctions");
+                      fetchUserBids(localStorage.getItem("userId"));
+                    }}
                   >
                     <FaGavel className="me-2" />
-                    My Auctions
+                    My Bids
                   </button>
                 </li>
                 <li className="nav-item">
                   <button 
                     className={`btn ${activeTab === "watchlist" ? "btn-primary" : "btn-dark"} me-2`}
-                    onClick={() => setActiveTab("watchlist")}
+                    onClick={() => {
+                      setActiveTab("watchlist");
+                      fetchWonAuctions(localStorage.getItem("userId"));
+                    }}
                   >
-                    <FaEye className="me-2" />
-                    Watchlist
+                    <FaTrophy className="me-2" />
+                    Won Auctions
                   </button>
                 </li>
                 <li className="nav-item">
                   <button 
-                    className={`btn ${activeTab === "activity" ? "btn-primary" : "btn-dark"}`}
-                    onClick={() => setActiveTab("activity")}
+                    className={`btn ${activeTab === "listings" ? "btn-primary" : "btn-dark"}`}
+                    onClick={() => {
+                      setActiveTab("listings");
+                      fetchUserListings(localStorage.getItem("userId"));
+                    }}
                   >
-                    <FaHistory className="me-2" />
-                    Activity
+                    <FaStore className="me-2" />
+                    My Listings
                   </button>
                 </li>
               </ul>
@@ -486,19 +424,26 @@ const Profile = ({ setIsAuthenticated }) => {
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
         
-        {/* Fetch status indicator */}
-        {fetchStatus.tried && !loading && !fetchStatus.success && (
-          <div className="alert alert-warning small py-2 mb-3">
-            <div className="d-flex align-items-center">
-              <span className="text-warning me-2">⚠</span>
-              <span>Using cached profile data. Some information might be outdated.</span>
-            </div>
-          </div>
-        )}
-        
         {/* Profile Tab */}
         {activeTab === "profile" && (
           <div className="row">
+            {/* Role Selection Card - Only shown if role is unset */}
+            {(userData?.role === 'unset' || !userData?.role) && (
+              <div className="col-12 mb-4">
+                <div className="card border-primary">
+                  <div className="card-header bg-primary text-white">
+                    <h5 className="mb-0"><FaUserTag className="me-2" />Choose Your Role</h5>
+                  </div>
+                  <div className="card-body">
+                    <div className="alert alert-info">
+                      <p className="mb-0">Please select how you would like to use our platform. This will customize your experience.</p>
+                    </div>
+                    <RoleSelector isEmbedded={true} />
+                  </div>
+                </div>
+              </div>
+            )}
+          
             <div className="col-lg-4 col-md-6 mb-4">
               <div className="card">
                 <div className="card-header">
@@ -519,21 +464,24 @@ const Profile = ({ setIsAuthenticated }) => {
                         required
                       />
                     </div>
-                    
+
                     <div className="mb-3">
                       <label htmlFor="email" className="form-label">
-                        Email Address
+                        Email Address <span className="text-muted small">(cannot be changed)</span>
                       </label>
                       <input
                         type="email"
-                        className="form-control"
+                        className="form-control bg-light"
                         id="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
+                        readOnly
+                        disabled
                       />
+                      <small className="form-text text-muted">
+                        Email addresses are used as unique identifiers and cannot be changed.
+                      </small>
                     </div>
-                    
+
                     <div className="d-grid gap-2">
                       <button
                         type="submit"
@@ -570,29 +518,29 @@ const Profile = ({ setIsAuthenticated }) => {
                 <div className="col-md-6 col-lg-3 mb-3">
                   <div className="stats-card">
                     <FaGavel className="mb-3" style={{ fontSize: "2rem", color: "var(--primary-color)" }} />
-                    <div className="stats-value">{auctionStats.bidsPlaced}</div>
-                    <div className="stats-label">Bids Placed</div>
+                    <div className="stats-value">{profileStats?.activeBids || 0}</div>
+                    <div className="stats-label">Active Bids</div>
                   </div>
                 </div>
                 <div className="col-md-6 col-lg-3 mb-3">
                   <div className="stats-card">
                     <FaBell className="mb-3" style={{ fontSize: "2rem", color: "var(--primary-color)" }} />
-                    <div className="stats-value">{auctionStats.activeAuctions}</div>
-                    <div className="stats-label">Active Auctions</div>
+                    <div className="stats-value">{profileStats?.activeListings || 0}</div>
+                    <div className="stats-label">Active Listings</div>
                   </div>
                 </div>
                 <div className="col-md-6 col-lg-3 mb-3">
                   <div className="stats-card">
                     <FaTrophy className="mb-3" style={{ fontSize: "2rem", color: "var(--secondary-color)" }} />
-                    <div className="stats-value">{auctionStats.wonAuctions}</div>
+                    <div className="stats-value">{profileStats?.wonAuctions || 0}</div>
                     <div className="stats-label">Auctions Won</div>
                   </div>
                 </div>
                 <div className="col-md-6 col-lg-3 mb-3">
                   <div className="stats-card">
                     <FaHeart className="mb-3" style={{ fontSize: "2rem", color: "#f87171" }} />
-                    <div className="stats-value">{auctionStats.watchlistCount}</div>
-                    <div className="stats-label">Watchlist Items</div>
+                    <div className="stats-value">{profileStats?.totalBidsPlaced || 0}</div>
+                    <div className="stats-label">Total Bids</div>
                   </div>
                 </div>
               </div>
@@ -602,30 +550,22 @@ const Profile = ({ setIsAuthenticated }) => {
                   <h5 className="mb-0"><FaHistory className="me-2" />Recent Activity</h5>
                 </div>
                 <div className="card-body">
-                  {activities.length === 0 ? (
+                  {!recentActivity || recentActivity.length === 0 ? (
                     <p className="text-muted text-center">No recent activities</p>
                   ) : (
                     <div className="list-group">
-                      {activities.slice(0, 3).map((activity) => (
-                        <div key={activity.id} className="list-group-item bg-dark border-secondary d-flex align-items-center">
-                          <div className="me-3" style={{ color: activity.type === 'win' ? 'var(--secondary-color)' : 'var(--primary-color)' }}>
-                            {activity.icon}
+                      {recentActivity.map((activity) => (
+                        <div key={activity._id} className="list-group-item bg-dark border-secondary d-flex align-items-center">
+                          <div className="me-3" style={{ color: "var(--primary-color)" }}>
+                            <FaGavel />
                           </div>
                           <div className="flex-grow-1">
-                            <div className="fw-bold">{activity.title}</div>
-                            <div className="text-muted small">{formatTimeAgo(activity.time)}</div>
+                            <div className="fw-bold">Bid ₹{activity.amount} on {activity.auction?.title || 'Unknown Auction'}</div>
+                            <div className="text-muted small">{formatTimeAgo(activity.date)}</div>
                           </div>
                         </div>
                       ))}
                     </div>
-                  )}
-                  {activities.length > 3 && (
-                    <button 
-                      className="btn btn-link text-primary d-block mx-auto mt-3"
-                      onClick={() => setActiveTab("activity")}
-                    >
-                      View all activity
-                    </button>
                   )}
                 </div>
               </div>
@@ -633,61 +573,20 @@ const Profile = ({ setIsAuthenticated }) => {
           </div>
         )}
         
-        {/* Auctions Tab */}
+        {/* Auctions Tab (My Bids) */}
         {activeTab === "auctions" && (
           <div className="row">
             <div className="col-12 mb-4">
               <div className="card">
                 <div className="card-header d-flex justify-content-between align-items-center">
-                  <h5 className="mb-0"><FaGavel className="me-2" />My Auctions</h5>
-                  <button className="btn btn-primary btn-sm" onClick={() => navigate("/sell")}>
-                    + Create New Auction
-                  </button>
+                  <h5 className="mb-0"><FaGavel className="me-2" />My Active Bids</h5>
                 </div>
                 <div className="card-body">
-                  <ul className="nav nav-tabs mb-4">
-                    <li className="nav-item">
-                      <button className="nav-link active">Active Bids</button>
-                    </li>
-                    <li className="nav-item">
-                      <button className="nav-link">Won Auctions</button>
-                    </li>
-                    <li className="nav-item">
-                      <button className="nav-link">My Listings</button>
-                    </li>
-                  </ul>
-                  
-                  <div className="text-center my-5">
-                    <FaGavel style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
-                    <h5 className="mt-3">You don't have any active bids</h5>
-                    <p className="text-muted">Start bidding on items to see them here</p>
-                    <button 
-                      className="btn btn-primary mt-2"
-                      onClick={() => navigate("/")}
-                    >
-                      Browse Auctions
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Watchlist Tab */}
-        {activeTab === "watchlist" && (
-          <div className="row">
-            <div className="col-12 mb-4">
-              <div className="card">
-                <div className="card-header">
-                  <h5 className="mb-0"><FaEye className="me-2" />My Watchlist</h5>
-                </div>
-                <div className="card-body">
-                  {watchlist.length === 0 ? (
+                  {activeBids.length === 0 ? (
                     <div className="text-center my-5">
-                      <FaEye style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
-                      <h5 className="mt-3">Your watchlist is empty</h5>
-                      <p className="text-muted">Add items to your watchlist to keep track of them</p>
+                      <FaGavel style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
+                      <h5 className="mt-3">You don't have any active bids</h5>
+                      <p className="text-muted">Start bidding on items to see them here</p>
                       <button 
                         className="btn btn-primary mt-2"
                         onClick={() => navigate("/")}
@@ -696,36 +595,40 @@ const Profile = ({ setIsAuthenticated }) => {
                       </button>
                     </div>
                   ) : (
-                    <div className="list-group">
-                      {watchlist.map((item) => (
-                        <div 
-                          key={item.id} 
-                          className="list-group-item bg-dark border-secondary d-flex align-items-center"
-                          style={{ cursor: "pointer" }}
-                          onClick={() => navigate(`/auction/${item.id}`)}
-                        >
-                          <img 
-                            src={item.image} 
-                            alt={item.title} 
-                            className="me-3" 
-                            style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "5px" }}
-                          />
-                          <div className="flex-grow-1">
-                            <h6 className="mb-1">{item.title}</h6>
-                            <div className="d-flex justify-content-between">
-                              <span className="text-success">₹ {item.currentBid.toLocaleString()}</span>
-                              <span className="text-muted small">{formatTimeLeft(item.endTime)}</span>
+                    <div className="row">
+                      {activeBids.map((bid) => (
+                        <div key={bid._id} className="col-md-6 col-lg-4 mb-3">
+                          <div 
+                            className="card h-100 auction-card"
+                            onClick={() => navigate(`/auction/${bid.auctionId}`)}
+                          >
+                            <div className="position-relative">
+                              <img 
+                                src={bid.image || "https://via.placeholder.com/300x200?text=No+Image"} 
+                                className="card-img-top auction-image" 
+                                alt={bid.title} 
+                              />
+                              <div className={`bid-status-badge ${bid.status === 'winning' ? 'winning' : 'outbid'}`}>
+                                {bid.status === 'winning' ? 'Winning' : 'Outbid'}
+                              </div>
+                            </div>
+                            <div className="card-body">
+                              <h5 className="card-title">{bid.title}</h5>
+                              <div className="d-flex justify-content-between">
+                                <div>
+                                  <p className="mb-0 small">Your bid</p>
+                                  <p className="text-primary fw-bold">₹{bid.amount}</p>
+                                </div>
+                                <div>
+                                  <p className="mb-0 small">Current high</p>
+                                  <p className="text-danger fw-bold">₹{bid.currentHighestBid}</p>
+                                </div>
+                              </div>
+                              <div className="text-end mt-2">
+                                <small className="text-muted">{formatTimeLeft(bid.endTime)}</small>
+                              </div>
                             </div>
                           </div>
-                          <button 
-                            className="btn btn-outline-danger btn-sm ms-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              alert("Item removed from watchlist");
-                            }}
-                          >
-                            <FaHeart />
-                          </button>
                         </div>
                       ))}
                     </div>
@@ -736,20 +639,20 @@ const Profile = ({ setIsAuthenticated }) => {
           </div>
         )}
         
-        {/* Activity Tab */}
-        {activeTab === "activity" && (
+        {/* Won Auctions Tab */}
+        {activeTab === "watchlist" && (
           <div className="row">
             <div className="col-12 mb-4">
               <div className="card">
                 <div className="card-header">
-                  <h5 className="mb-0"><FaHistory className="me-2" />Activity History</h5>
+                  <h5 className="mb-0"><FaTrophy className="me-2" />Won Auctions</h5>
                 </div>
                 <div className="card-body">
-                  {activities.length === 0 ? (
+                  {wonAuctions.length === 0 ? (
                     <div className="text-center my-5">
-                      <FaHistory style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
-                      <h5 className="mt-3">No activity yet</h5>
-                      <p className="text-muted">Your auction activities will appear here</p>
+                      <FaTrophy style={{ fontSize: "3rem", color: "var(--secondary-color)", opacity: 0.5 }} />
+                      <h5 className="mt-3">You haven't won any auctions yet</h5>
+                      <p className="text-muted">Keep bidding to win items!</p>
                       <button 
                         className="btn btn-primary mt-2"
                         onClick={() => navigate("/")}
@@ -758,15 +661,105 @@ const Profile = ({ setIsAuthenticated }) => {
                       </button>
                     </div>
                   ) : (
-                    <div className="list-group">
-                      {activities.map((activity) => (
-                        <div key={activity.id} className="list-group-item bg-dark border-secondary d-flex align-items-center">
-                          <div className="me-3" style={{ color: activity.type === 'win' ? 'var(--secondary-color)' : 'var(--primary-color)' }}>
-                            {activity.icon}
+                    <div className="row">
+                      {wonAuctions.map((auction) => (
+                        <div key={auction._id} className="col-md-6 col-lg-4 mb-3">
+                          <div 
+                            className="card h-100 auction-card"
+                            onClick={() => navigate(`/auction/${auction._id}`)}
+                          >
+                            <div className="position-relative">
+                              <img 
+                                src={auction.image || "https://via.placeholder.com/300x200?text=No+Image"} 
+                                className="card-img-top auction-image" 
+                                alt={auction.title} 
+                              />
+                              <div className="bid-status-badge winning">
+                                Won
+                              </div>
+                            </div>
+                            <div className="card-body">
+                              <h5 className="card-title">{auction.title}</h5>
+                              <p className="card-text small">{auction.description?.substring(0, 100)}...</p>
+                              <div className="d-flex justify-content-between align-items-center mt-2">
+                                <span className="text-success fw-bold">₹{auction.highestBid}</span>
+                                <small className="text-muted">Won on {new Date(auction.endTime).toLocaleDateString()}</small>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex-grow-1">
-                            <div className="fw-bold">{activity.title}</div>
-                            <div className="text-muted small">{formatTimeAgo(activity.time)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* My Listings Tab */}
+        {activeTab === "listings" && (
+          <div className="row">
+            <div className="col-12 mb-4">
+              <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0"><FaStore className="me-2" />My Listings</h5>
+                  <button className="btn btn-primary btn-sm" onClick={() => navigate("/sell")}>
+                    + Create New Auction
+                  </button>
+                </div>
+                <div className="card-body">
+                  {userListings.length === 0 ? (
+                    <div className="text-center my-5">
+                      <FaStore style={{ fontSize: "3rem", color: "var(--primary-color)", opacity: 0.5 }} />
+                      <h5 className="mt-3">You don't have any auction listings</h5>
+                      <p className="text-muted">Create your first auction to sell items</p>
+                      <button 
+                        className="btn btn-primary mt-2"
+                        onClick={() => navigate("/sell")}
+                      >
+                        Create Auction
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="row">
+                      {userListings.map((listing) => (
+                        <div key={listing._id} className="col-md-6 col-lg-4 mb-3">
+                          <div 
+                            className="card h-100 auction-card"
+                            onClick={() => navigate(`/auction/${listing._id}`)}
+                          >
+                            <div className="position-relative">
+                              <img 
+                                src={listing.image || "https://via.placeholder.com/300x200?text=No+Image"} 
+                                className="card-img-top auction-image" 
+                                alt={listing.title} 
+                              />
+                              <div className={`bid-status-badge ${listing.status === 'active' ? 'active' : listing.status === 'sold' ? 'winning' : 'outbid'}`}>
+                                {listing.status === 'active' ? 'Active' : listing.status === 'sold' ? 'Sold' : 'Ended'}
+                              </div>
+                            </div>
+                            <div className="card-body">
+                              <h5 className="card-title">{listing.title}</h5>
+                              <p className="card-text small">{listing.description?.substring(0, 100)}...</p>
+                              <div className="d-flex justify-content-between">
+                                <div>
+                                  <p className="mb-0 small">Starting bid</p>
+                                  <p className="text-primary fw-bold">₹{listing.startingBid}</p>
+                                </div>
+                                <div>
+                                  <p className="mb-0 small">Current high</p>
+                                  <p className="text-danger fw-bold">₹{listing.highestBid || listing.startingBid}</p>
+                                </div>
+                              </div>
+                              <div className="text-end mt-2">
+                                <small className="text-muted">
+                                  {listing.status === 'active' 
+                                    ? formatTimeLeft(listing.endTime) 
+                                    : `Ended ${formatTimeAgo(listing.endTime)}`}
+                                </small>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}

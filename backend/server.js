@@ -12,13 +12,11 @@ import auctionRoutes from "./routes/auctionRoutes.js";
 import bidRoutes from "./routes/bidRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 import Auction from "./models/Auction.js";
 import Bid from "./models/Bid.js";
 import User from "./models/User.js";
-
-// Import dashboard and watchlist routes
-import dashboardRoutes from "./routes/dashboard.routes.js";
-import watchlistRoutes from "./routes/watchlist.routes.js";
 
 dotenv.config();
 const app = express();
@@ -29,9 +27,11 @@ const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5173", // Frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  origin: ["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"], // Frontend URLs
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
+  optionsSuccessStatus: 200
 }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -52,10 +52,37 @@ app.use("/api/bids", bidRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/watchlist", watchlistRoutes);
+app.use("/api/profile", profileRoutes);
 
 // Serve uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  
+  // Handle multer errors
+  if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File too large. Maximum size is 2MB.' });
+    }
+    return res.status(400).json({ error: `Upload error: ${err.message}` });
+  }
+  
+  // Handle validation errors
+  if (err.name === 'ValidationError') {
+    const messages = Object.values(err.errors).map(val => val.message);
+    return res.status(400).json({ error: messages.join(', ') });
+  }
+  
+  // Handle duplicate key errors
+  if (err.code === 11000) {
+    return res.status(409).json({ error: 'A record with this information already exists' });
+  }
+  
+  // Default error response
+  res.status(500).json({ error: 'Server error. Please try again later.' });
+});
 
 // API route to get all auctions with winner's name populated
 app.get("/api/auctions", async (req, res) => {

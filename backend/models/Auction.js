@@ -18,6 +18,13 @@ const auctionSchema = new mongoose.Schema({
     ref: 'User',  // Reference to the User model for the winner
     default: null 
   },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',  // Reference to the User who created this auction
+    required: true
+  },
+  category: { type: String, default: 'Uncategorized' },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const Auction = mongoose.model("Auction", auctionSchema);

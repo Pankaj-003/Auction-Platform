@@ -2,13 +2,14 @@ import express from "express";
 import Auction from "../models/Auction.js";
 import Bid from "../models/Bid.js";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
 // ✅ Create a new auction item
 router.post("/add", async (req, res) => {
   try {
-    const { title, description, image, startingBid, endDate } = req.body;
+    const { title, description, image, startingBid, endDate, seller, category } = req.body;
 
     if (!title || !description || !image || !startingBid || !endDate) {
       return res.status(400).json({ error: "All fields are required" });
@@ -32,6 +33,8 @@ router.post("/add", async (req, res) => {
       endTime,
       isEnded: false,
       winner: null,
+      seller: seller || null,
+      category: category || "Uncategorized"
     });
 
     await newAuction.save();
@@ -46,7 +49,10 @@ router.post("/add", async (req, res) => {
 // ✅ Get all auction items (with current highest bid and winner)
 router.get("/", async (req, res) => {
   try {
-    const auctions = await Auction.find().sort({ endTime: 1 }).populate("winner", "name");
+    const auctions = await Auction.find()
+      .sort({ endTime: 1 })
+      .populate("winner", "name")
+      .populate("seller", "name");
 
     const auctionsWithBids = await Promise.all(
       auctions.map(async (auction) => {
@@ -69,17 +75,57 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Get auction details by ID (with winner if declared)
-router.get('/:id', async (req, res) => {
+// ✅ Get auction details by ID (with bids and related data)
+router.get('/:auctionId', async (req, res) => {
   try {
-    const auction = await Auction.findById(req.params.id).populate('winner', 'name email');
-    if (!auction) {
-      return res.status(404).send('Auction not found');
+    const { auctionId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(auctionId)) {
+      return res.status(400).json({ message: "Invalid auction ID format" });
     }
-    res.json(auction);
+    
+    // Find the auction with populated references
+    const auction = await Auction.findById(auctionId)
+      .populate('winner', 'name email')
+      .populate('seller', 'name email')
+      .populate('highestBidder', 'name email');
+    
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+    
+    // Get highest bid if not already present
+    if (!auction.highestBid) {
+      const highestBid = await Bid.findOne({ auctionId })
+        .sort({ amount: -1 });
+      
+      if (highestBid) {
+        auction.highestBid = highestBid.amount;
+        auction.highestBidder = highestBid.userId;
+      }
+    }
+    
+    // Get total number of bids
+    const bidCount = await Bid.countDocuments({ auctionId });
+    
+    // Calculate time remaining
+    const now = new Date();
+    const endTime = new Date(auction.endTime);
+    const timeRemaining = endTime > now ? endTime - now : 0;
+    
+    // Return comprehensive auction data
+    return res.status(200).json({
+      ...auction._doc,
+      bidCount,
+      isActive: timeRemaining > 0,
+      timeRemaining
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
+    console.error("Error fetching auction:", error);
+    return res.status(500).json({ 
+      message: "Server error while fetching auction",
+      error: error.message 
+    });
   }
 });
 

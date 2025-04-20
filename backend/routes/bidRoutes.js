@@ -4,6 +4,7 @@ import Bid from "../models/Bid.js";
 import Auction from "../models/Auction.js";
 import User from "../models/User.js";
 import { verifyToken } from "../middleware/auth.js";
+import { placeBid, findExistingBid } from "../utils/bidUtils.js";
 
 const router = express.Router();
 
@@ -11,85 +12,57 @@ const router = express.Router();
 router.post("/:auctionId", verifyToken, async (req, res) => {
   try {
     const { auctionId } = req.params;
-    const { userId, amount } = req.body;
+    const { amount } = req.body;
+    // Use the authenticated user ID from the token
+    const userId = req.user.id;
     
     console.log("Bid request:", { auctionId, userId, amount });
     
-    // Validate input
-    if (!amount || isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ message: "Bid amount must be a positive number" });
+    // Validate basic input
+    if (!amount || isNaN(parseFloat(amount))) {
+      return res.status(400).json({ message: "Bid amount must be a valid number" });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(auctionId)) {
-      return res.status(400).json({ message: "Invalid userId or auctionId" });
+    if (!mongoose.Types.ObjectId.isValid(auctionId)) {
+      return res.status(400).json({ message: "Invalid auction ID format" });
     }
 
-    // Verify the requesting user matches the userId in the request body
-    if (req.user.id.toString() !== userId) {
-      return res.status(403).json({ message: "Unauthorized: You can only place bids as yourself" });
-    }
-
-    // Find user and auction
-    const user = await User.findById(userId);
-    const auction = await Auction.findById(auctionId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    
-    if (!auction) {
-      return res.status(404).json({ message: "Auction not found" });
-    }
-
-    // Check if auction has ended
-    if (new Date(auction.endTime) <= new Date()) {
-      return res.status(400).json({ message: "❌ Auction has already ended" });
-    }
-
-    // Get current highest bid
-    const highestBid = await Bid.findOne({ auctionId }).sort({ amount: -1 });
-    const highestAmount = highestBid ? highestBid.amount : auction.startingBid;
-
-    if (parseFloat(amount) <= highestAmount) {
-      return res.status(400).json({
-        message: `❌ Your bid must be higher than the current highest bid of ₹${highestAmount}`,
-      });
-    }
-
-    // Check if user already placed a bid on this auction
-    const existingBid = await Bid.findOne({ userId, auctionId });
-    
-    if (existingBid) {
-      // Update the existing bid instead of creating a new one
-      existingBid.amount = amount;
-      await existingBid.save();
+    // Use the utility function to place or update the bid
+    try {
+      const result = await placeBid(userId, auctionId, amount);
       
-      // Update auction's highest bid and bidder
-      auction.highestBid = amount;
-      auction.highestBidder = userId;
-      await auction.save();
+      // Return the appropriate response based on the result
+      return res.status(result.status).json({
+        message: `✅ ${result.message}`,
+        bid: result.bid
+      });
+    } catch (bidError) {
+      // Handle specific error messages from the bid utility
+      console.error("Bid placement error:", bidError.message);
       
-      return res.status(200).json({ 
-        message: "✅ Bid updated successfully", 
-        bid: existingBid 
-      });
-    } else {
-      // Save the new bid
-      const newBid = new Bid({ userId, auctionId, amount });
-      await newBid.save();
-
-      // Update auction's highest bid and bidder
-      auction.highestBid = amount;
-      auction.highestBidder = userId;
-      await auction.save();
-
-      return res.status(201).json({ 
-        message: "✅ Bid placed successfully", 
-        bid: newBid 
-      });
+      // Check for specific error messages to determine the appropriate status code
+      if (bidError.message.includes("must be higher")) {
+        return res.status(400).json({ message: `❌ ${bidError.message}` });
+      } else if (bidError.message.includes("ended")) {
+        return res.status(400).json({ message: `❌ ${bidError.message}` });
+      } else if (bidError.message.includes("not found")) {
+        return res.status(404).json({ message: `❌ ${bidError.message}` });
+      } else if (bidError.message.includes("Server error while placing bid")) {
+        // Extract the actual error message from the thrown error
+        const errorMessage = bidError.message.replace("Server error while placing bid: ", "");
+        return res.status(500).json({ 
+          message: "❌ Error processing bid",
+          error: errorMessage 
+        });
+      } else {
+        return res.status(500).json({ 
+          message: "❌ Error processing bid",
+          error: bidError.message 
+        });
+      }
     }
   } catch (err) {
-    console.error("Bid Error:", err);
+    console.error("Bid route error:", err);
     return res.status(500).json({
       message: "❌ Server error while placing bid",
       error: err.message,

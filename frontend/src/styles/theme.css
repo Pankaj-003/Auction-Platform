@@ -1,3 +1,285 @@
+/* ============================================
+   THEME SYSTEM
+   Support for light/dark mode with smooth transitions
+   ============================================ */
+
+:root {
+  /* Theme Transition */
+  --theme-transition-duration: 0.3s;
+  --theme-transition-timing: ease;
+  
+  /* Common Variables (shared across themes) */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-pill: 9999px;
+  
+  --font-family-primary: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-family-secondary: 'Space Grotesk', 'Roboto', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Spacing Variables */
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  
+  /* Shadow Variables */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Interaction States */
+  --focus-ring-color: rgba(76, 201, 240, 0.5);
+  --focus-ring-width: 3px;
+}
+
+/* Dark Theme (Default) */
+:root {
+  /* Core Background & Text Colors */
+  --color-bg-primary: #0A0A1B;
+  --color-bg-secondary: #10101F;
+  --color-bg-tertiary: #16162A;
+  --color-bg-elevated: #1E1E35;
+  --color-bg-overlay: rgba(10, 10, 27, 0.8);
+  
+  /* Text Colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-tertiary: rgba(255, 255, 255, 0.5);
+  --color-text-disabled: rgba(255, 255, 255, 0.3);
+  
+  /* Brand Colors */
+  --color-primary: #4CC9F0;
+  --color-primary-hover: #5ED2F3;
+  --color-primary-active: #3AB6DB;
+  --color-primary-muted: rgba(76, 201, 240, 0.2);
+  
+  --color-secondary: #7B2CBF;
+  --color-secondary-hover: #8C3DD0;
+  --color-secondary-active: #6A1BAE;
+  --color-secondary-muted: rgba(123, 44, 191, 0.2);
+  
+  --color-accent: #F72585;
+  --color-accent-hover: #F83694;
+  --color-accent-active: #E61476;
+  --color-accent-muted: rgba(247, 37, 133, 0.2);
+  
+  /* Functional Colors */
+  --color-success: #39FF14;
+  --color-warning: #FFDD00;
+  --color-danger: #FF3131;
+  --color-info: #00F5FF;
+  
+  /* Border Colors */
+  --color-border-primary: rgba(255, 255, 255, 0.1);
+  --color-border-secondary: rgba(255, 255, 255, 0.05);
+  --color-border-focus: var(--color-primary);
+  
+  /* UI Component Specific */
+  --color-input-bg: rgba(255, 255, 255, 0.07);
+  --color-input-border: rgba(255, 255, 255, 0.1);
+  --color-button-bg: var(--color-primary);
+  --color-button-text: #FFFFFF;
+  --color-card-bg: var(--color-bg-secondary);
+  --color-card-border: var(--color-border-primary);
+  
+  /* Shadows */
+  --shadow-outline: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  --shadow-glow: 0 0 15px rgba(76, 201, 240, 0.3);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  /* Core Background & Text Colors */
+  --color-bg-primary: #F4F7FD;
+  --color-bg-secondary: #EDF0F7;
+  --color-bg-tertiary: #E4E8F0;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-overlay: rgba(255, 255, 255, 0.85);
+  
+  /* Text Colors */
+  --color-text-primary: #121212;
+  --color-text-secondary: rgba(18, 18, 18, 0.7);
+  --color-text-tertiary: rgba(18, 18, 18, 0.5);
+  --color-text-disabled: rgba(18, 18, 18, 0.3);
+  
+  /* Brand Colors - Adjusted for light theme */
+  --color-primary: #0095C8;
+  --color-primary-hover: #0085B4;
+  --color-primary-active: #00A5DA;
+  --color-primary-muted: rgba(0, 149, 200, 0.15);
+  
+  --color-secondary: #6A1BAE;
+  --color-secondary-hover: #5C109E;
+  --color-secondary-active: #7B2CBF;
+  --color-secondary-muted: rgba(106, 27, 174, 0.15);
+  
+  --color-accent: #D61B76;
+  --color-accent-hover: #C21868;
+  --color-accent-active: #E62082;
+  --color-accent-muted: rgba(214, 27, 118, 0.15);
+  
+  /* Functional Colors - Adjusted for light theme */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #0EA5E9;
+  
+  /* Border Colors */
+  --color-border-primary: rgba(18, 18, 18, 0.1);
+  --color-border-secondary: rgba(18, 18, 18, 0.05);
+  --color-border-focus: var(--color-primary);
+  
+  /* UI Component Specific */
+  --color-input-bg: rgba(18, 18, 18, 0.03);
+  --color-input-border: rgba(18, 18, 18, 0.1);
+  --color-button-bg: var(--color-primary);
+  --color-button-text: #FFFFFF;
+  --color-card-bg: var(--color-bg-elevated);
+  --color-card-border: var(--color-border-primary);
+  
+  /* Shadows */
+  --shadow-outline: 0 0 0 var(--focus-ring-width) rgba(0, 149, 200, 0.35);
+  --shadow-glow: 0 4px 20px rgba(0, 149, 200, 0.2);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+}
+
+/* Theme-aware elements with transitions */
+body, 
+input, 
+textarea, 
+select, 
+button,
+.card,
+.navbar,
+.sidebar,
+.modal,
+.dropdown,
+.tooltip,
+.footer {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Theme Toggle Styles */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: var(--z-fixed);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-glow);
+}
+
+.theme-toggle svg {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.5s ease;
+}
+
+.theme-toggle:hover svg {
+  transform: rotate(30deg);
+}
+
+/* Light theme icon shows in dark mode */
+[data-theme="dark"] .theme-toggle .light-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .dark-icon {
+  display: none;
+}
+
+/* Dark theme icon shows in light mode */
+[data-theme="light"] .theme-toggle .dark-icon {
+  display: block;
+}
+
+[data-theme="light"] .theme-toggle .light-icon {
+  display: none;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  .theme-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Theme-aware component utilities */
+.theme-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 4px 20px var(--shadow-glow);
+}
+
+.theme-input {
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  color: var(--color-text-primary);
+}
+
+.theme-input:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-outline);
+}
+
+/* Dark mode emphasis */
+[data-theme="dark"] .dark-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+[data-theme="dark"] .dark-glow:hover {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Light mode emphasis */
+[data-theme="light"] .light-shadow {
+  box-shadow: var(--shadow-glow);
+}
+
+[data-theme="light"] .light-shadow:hover {
+  box-shadow: var(--shadow-glow);
+}
+
 /* Theme CSS Variables */
 :root {
   /* Default theme is dark */
@@ -75,40 +357,6 @@
 /* Basic transitions for all elements */
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Theme Toggle Switch */
-.theme-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: var(--dark-card);
-  border: 1px solid var(--dark-border);
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.theme-toggle:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
-}
-
-.theme-toggle .icon {
-  font-size: 1.5rem;
-  color: var(--primary-color);
-  transition: transform 0.5s ease;
-}
-
-.theme-toggle:hover .icon {
-  transform: rotate(30deg);
 }
 
 /* Dark mode specific overrides */

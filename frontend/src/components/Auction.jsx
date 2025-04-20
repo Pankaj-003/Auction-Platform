@@ -6,6 +6,7 @@ import "../styles/Auction.css";
 import "../styles/banner.css";
 import "../styles/productSlider.css";
 import "../styles/theme.css";
+import { auctionAPI, watchlistAPI } from "../utils/apiClient";
 
 const Auction = () => {
   const [auctionItems, setAuctionItems] = useState([]);
@@ -25,6 +26,9 @@ const Auction = () => {
   
   const userId = localStorage.getItem("userId");
   const alert = useAlert();
+
+  // Create a reference for tracking bid operations
+  const pendingBidRef = useRef({});
 
   useEffect(() => {
     fetchAuctions();
@@ -57,8 +61,8 @@ const Auction = () => {
 
   const fetchAuctions = () => {
     setLoading(true);
-    fetch("http://localhost:8000/api/auctions")
-      .then((res) => res.json())
+    auctionAPI.getAll()
+      .then((res) => res.data)
       .then((data) => {
         const liveAuctions = data.filter(
           (item) => new Date(item.endTime) > new Date()
@@ -94,15 +98,20 @@ const Auction = () => {
   };
 
   const fetchWatchlist = () => {
-    fetch(`http://localhost:8000/api/watchlist/${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
+    if (!userId) {
+      console.log("No user ID available for fetching watchlist");
+      return;
+    }
+    
+    watchlistAPI.getByUser(userId)
+      .then((res) => {
         // Extract auction IDs from watchlist
-        const watchlistIds = data.map(item => item.auction._id);
+        const watchlistIds = res.data.map(item => item.auction._id);
         setWatchlist(watchlistIds);
       })
       .catch((err) => {
         console.error("Error fetching watchlist:", err);
+        // Don't update watchlist state on error
       });
   };
 
@@ -171,6 +180,54 @@ const Auction = () => {
     return true;
   };
 
+  // Function to ensure token is available and valid
+  const ensureValidToken = async () => {
+    // Get token for authentication
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      alert.error("You need to be logged in to perform this action");
+      return null;
+    }
+    
+    // Check if token is expired by trying to validate it
+    try {
+      const response = await fetch("http://localhost:8000/api/auth/validate-token", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        // If token validation fails, redirect to login
+        alert.error("Your session has expired. Please log in again.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        // Redirect to login page
+        window.location.href = "/signin";
+        return null;
+      }
+      
+      // If token is valid, get the response data to ensure userId is set correctly
+      const userData = await response.json();
+      
+      // Make sure userId is set in localStorage
+      if (userData && userData.user && userData.user.id) {
+        if (!localStorage.getItem("userId") || localStorage.getItem("userId") === "undefined") {
+          localStorage.setItem("userId", userData.user.id);
+          console.log("userId updated in localStorage:", userData.user.id);
+        }
+      }
+      
+      // Token is valid
+      return token;
+    } catch (err) {
+      console.error("Token validation error:", err);
+      return token; // Return token anyway to try the operation
+    }
+  };
+
   const handlePlaceBid = async (auctionId) => {
     const auction = auctionItems.find(item => item._id === auctionId);
     if (!auction) return;
@@ -178,76 +235,159 @@ const Auction = () => {
     const amount = bidAmounts[auctionId];
     if (!validateBid(amount, auction)) return;
 
+    // Prevent multiple submissions for the same auction
+    if (pendingBidRef.current[auctionId]) {
+      console.log('Bid already in progress for this auction');
+      return;
+    }
+
+    // Mark this auction as having a pending bid
+    pendingBidRef.current[auctionId] = true;
     setIsSubmitting(true);
 
     try {
-      // Get token for authentication
-      const token = localStorage.getItem("token");
+      // Use the token validation function
+      const token = await ensureValidToken();
       if (!token) {
-        alert.error("You need to be logged in to place a bid");
         setIsSubmitting(false);
+        pendingBidRef.current[auctionId] = false;
         return;
       }
 
-      // Make API request with correct URL and body format
-      const res = await fetch(`http://localhost:8000/api/bids/${auctionId}`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          userId, 
-          amount: parseFloat(amount) 
-        }),
-      });
+      console.log(`Placing bid of ${amount} on auction ${auctionId}`);
 
-      const data = await res.json();
+      const res = await auctionAPI.placeBid(auctionId, parseFloat(amount));
+      const data = res.data;
 
-      if (res.ok) {
-        alert.success(data.message || "Bid placed successfully!");
-        setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
-        // Refresh auctions to show updated bid
+      // Clear the bid amount regardless of success/failure
+      setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }));
+
+      // Show success message and play success sound if available
+      alert.success(data.message || "Bid placed successfully!");
+      
+      // Update the local auction data with the new bid
+      setAuctionItems(prev => 
+        prev.map(item => 
+          item._id === auctionId 
+            ? {
+                ...item, 
+                highestBid: parseFloat(amount), 
+                highestBidder: userId
+              }
+            : item
+        )
+      );
+      
+      // Fetch latest auction data - but don't depend on it for immediate UI feedback
+      setTimeout(() => {
         fetchAuctions();
-      } else {
-        alert.error(data.message || "Failed to place bid");
-        console.error("Bid error response:", data);
-      }
+      }, 500);
     } catch (err) {
       console.error("Bid Error:", err);
-      alert.error("Error placing bid. Please try again.");
+      
+      // Check if the auction was already updated (race condition)
+      try {
+        const updatedAuction = await checkAuctionStatus(auctionId);
+        const userIsHighestBidder = updatedAuction?.highestBidder === userId;
+        const auctionHasUserBid = parseFloat(updatedAuction?.highestBid) === parseFloat(amount);
+        
+        if (userIsHighestBidder && auctionHasUserBid) {
+          // The bid was actually successful despite the error response
+          alert.success("Your bid was successfully recorded!");
+          
+          // Update the auction in the local state
+          setAuctionItems(prev => 
+            prev.map(item => 
+              item._id === auctionId 
+                ? {
+                    ...item, 
+                    highestBid: parseFloat(amount), 
+                    highestBidder: userId
+                  }
+                : item
+            )
+          );
+        } else {
+          // Show detailed error message
+          let errorMessage = "Failed to place bid";
+          
+          if (err.response && err.response.data) {
+            errorMessage = err.response.data.message || err.response.data.error || errorMessage;
+          }
+          
+          // Display a more user-friendly message if it's a server error
+          if (errorMessage.includes("Server error") || (err.response && err.response.status === 500)) {
+            alert.error("There was a problem with the server. Please try again later.");
+            console.error("Server error details:", err.response?.data);
+          } else {
+            alert.error(errorMessage);
+          }
+          
+          // If there's a specific error about the bid amount being too low, update the auction data
+          if (errorMessage.includes("must be higher")) {
+            fetchAuctions(); // Refresh to get the latest highest bid
+          }
+        }
+      } catch (statusError) {
+        console.error("Error checking auction status:", statusError);
+        alert.error("Error connecting to the server. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
+      // Clear the pending flag for this auction
+      pendingBidRef.current[auctionId] = false;
     }
   };
 
+  // Function to check the current status of an auction
+  const checkAuctionStatus = async (auctionId) => {
+    try {
+      const response = await auctionAPI.getById(auctionId);
+      return response.data;
+    } catch (error) {
+      console.error("Error checking auction status:", error);
+      return null;
+    }
+  };
+
+  // Update toggleWatchlist to also use the token validation function
   const toggleWatchlist = async (auctionId) => {
     if (!userId) {
       alert.warning("Please log in to add items to your watchlist");
       return;
     }
 
+    if (!auctionId) {
+      console.error("Error: Missing auction ID");
+      alert.error("Could not update watchlist: Invalid auction");
+      return;
+    }
+
     try {
+      // Use the token validation function
+      const token = await ensureValidToken();
+      if (!token) return;
+      
       if (watchlist.includes(auctionId)) {
         // Remove from watchlist
-        await fetch(`http://localhost:8000/api/watchlist/${userId}/${auctionId}`, {
-          method: "DELETE"
-        });
+        await watchlistAPI.removeFromWatchlist(userId, auctionId);
         setWatchlist(prev => prev.filter(id => id !== auctionId));
         alert.success("Removed from watchlist");
       } else {
         // Add to watchlist
-        await fetch(`http://localhost:8000/api/watchlist/${userId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ auctionId }),
-        });
+        await watchlistAPI.addToWatchlist(userId, auctionId);
         setWatchlist(prev => [...prev, auctionId]);
         alert.success("Added to watchlist");
       }
     } catch (err) {
-      console.error("Watchlist Error:", err);
-      alert.error("Error updating watchlist");
+      console.error("Watchlist Error:", err.message);
+      
+      let errorMessage = "Error updating watchlist";
+      if (err.response && err.response.data) {
+        errorMessage = `${errorMessage}: ${err.response.data.message || err.response.data.error}`;
+      }
+      
+      alert.error(errorMessage);
     }
   };
 
@@ -310,6 +450,124 @@ const Auction = () => {
           return new Date(a.endTime) - new Date(b.endTime);
       }
     });
+
+  // Render method to show filtered auctions
+  const renderAuctions = () => {
+    if (loading) {
+      return (
+        <div className="loading-container">
+          <div className="futuristic-loader"></div>
+          <p>Loading auction items...</p>
+        </div>
+      );
+    }
+
+    let filteredAuctions = [...auctionItems];
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filteredAuctions = filteredAuctions.filter(
+        (item) => item.category === selectedCategory
+      );
+    }
+
+    // Filter by search query
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase();
+      filteredAuctions = filteredAuctions.filter(
+        (item) =>
+          item.title.toLowerCase().includes(query) ||
+          (item.description && item.description.toLowerCase().includes(query))
+      );
+    }
+
+    // Sort auctions
+    if (sortBy === "endTime") {
+      filteredAuctions.sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
+    } else if (sortBy === "price") {
+      filteredAuctions.sort((a, b) => b.highestBid - a.highestBid);
+    } else if (sortBy === "newest") {
+      filteredAuctions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    if (filteredAuctions.length === 0) {
+      return (
+        <div className="empty-auctions glass-panel">
+          <FaGavel className="empty-icon" />
+          <h3>No Auctions Found</h3>
+          <p>Try changing your filters or check back later for new items</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="auction-grid">
+        {filteredAuctions.map((auction) => (
+          <div
+            key={auction._id}
+            className="auction-card future-card hover-lift hover-glow"
+            onClick={() => handleCardClick(auction)}
+          >
+            <div className="auction-card-badge">
+              {countdowns[auction._id] && countdowns[auction._id].includes("m") && !countdowns[auction._id].includes("d") && !countdowns[auction._id].includes("h")
+                ? <span className="ending-soon">Ending Soon!</span>
+                : null
+              }
+            </div>
+            
+            <div className="auction-card-image-container">
+              <img
+                src={auction.image || "https://via.placeholder.com/300x200?text=No+Image"}
+                alt={auction.title}
+                className="auction-card-image"
+              />
+              <button 
+                className={`wishlist-button ${watchlist.includes(auction._id) ? 'in-wishlist' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleWatchlist(auction._id);
+                }}
+              >
+                <FaHeart />
+              </button>
+            </div>
+            
+            <div className="auction-card-content">
+              <div className="auction-card-header">
+                <h3 className="auction-card-title gradient-text">{auction.title}</h3>
+                {auction.category && (
+                  <span className="auction-category future-badge">{auction.category}</span>
+                )}
+              </div>
+              
+              <div className="auction-card-details">
+                <div className="bid-info">
+                  <div className="current-bid">
+                    <span className="bid-label"><FaGavel /> Current Bid:</span>
+                    <span className="bid-amount">₹{auction.highestBid?.toLocaleString() || auction.startingBid?.toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="time-remaining">
+                    <span className="time-label"><FaRegClock /></span>
+                    <span className="time-value">{countdowns[auction._id] || "Loading..."}</span>
+                  </div>
+                </div>
+                
+                <div className="auction-card-footer">
+                  <div className="bid-count">
+                    <FaRegEye /> {auction.views || 0} views
+                  </div>
+                  <button className="view-button">
+                    View Details <FaArrowRight />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="auction-page">
@@ -428,7 +686,7 @@ const Auction = () => {
               >
                 <FaChevronLeft />
               </button>
-              <button 
+              <button
                 className="slider-arrow" 
                 onClick={() => handleSlide("next")}
                 aria-label="Next items"
@@ -454,73 +712,53 @@ const Auction = () => {
       <div className="container py-5">
         {!selectedAuction && (
           <>
-            <h2 className="text-center fw-bold mb-5 fade-in text-primary section-title">
-              <FaGavel className="me-2" /> Live Auctions
+            <h2 className="live-auction-heading">
+              <FaGavel className="live-auction-icon" /> Live Auctions
             </h2>
 
-            {/* Search and Filters */}
-            <div className="filters-container mb-4">
-              {/* Search Bar */}
-              <form className="search-form" onSubmit={handleSearch}>
-                <div className="search-input-container">
-                  <input
-                    type="text"
-                    placeholder="Search items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input"
-                  />
-                  <button type="submit" className="search-button">
-                    <FaSearch />
-                  </button>
-                </div>
-              </form>
-
-              {/* Filter by Categories */}
-              <div className="categories-container">
-                <div className="categories-scroll">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      className={`category-button ${selectedCategory === category ? 'active' : ''}`}
-                      onClick={() => handleCategoryChange(category)}
-                    >
-                      {category === "all" ? "All Items" : category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sort Options - Fixed Dropdown */}
-              <div className="sort-container">
-                <button className="sort-button">
-                  <FaSortAmountDown className="me-2" /> Sort
+            {/* Search and Filters - Updated to match design */}
+            <div className="auction-search-container">
+              <div className="search-input-wrapper">
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="auction-search-input"
+                />
+                <button type="submit" className="auction-search-button">
+                  <FaSearch />
                 </button>
-                <div className="sort-dropdown-content">
-                  <button 
-                    className={`sort-option ${sortBy === 'endTime' ? 'active' : ''}`}
-                    onClick={() => handleSortChange('endTime')}
+              </div>
+              
+              <div className="auction-filter-controls">
+                <div className="auction-category-dropdown">
+                  <div className="filter-label">Category</div>
+                  <select 
+                    value={selectedCategory} 
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="auction-filter-select"
                   >
-                    Ending Soon
-                  </button>
-                  <button 
-                    className={`sort-option ${sortBy === 'priceAsc' ? 'active' : ''}`}
-                    onClick={() => handleSortChange('priceAsc')}
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>
+                        {cat === "all" ? "All Items" : cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="auction-sort-dropdown">
+                  <div className="filter-label">Sort by</div>
+                  <select 
+                    value={sortBy} 
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="auction-filter-select"
                   >
-                    Price: Low to High
-                  </button>
-                  <button 
-                    className={`sort-option ${sortBy === 'priceDesc' ? 'active' : ''}`}
-                    onClick={() => handleSortChange('priceDesc')}
-                  >
-                    Price: High to Low
-                  </button>
-                  <button 
-                    className={`sort-option ${sortBy === 'popularity' ? 'active' : ''}`}
-                    onClick={() => handleSortChange('popularity')}
-                  >
-                    Most Popular
-                  </button>
+                    <option value="endTime">Ending Soon</option>
+                    <option value="priceAsc">Price: Low to High</option>
+                    <option value="priceDesc">Price: High to Low</option>
+                    <option value="popularity">Most Popular</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -576,7 +814,7 @@ const Auction = () => {
                       )}
                     </div>
 
-                    {selectedAuction.highestBid > selectedAuction.startingBid ? (
+              {selectedAuction.highestBid > selectedAuction.startingBid ? (
                       <div className="highest-bid-info">
                         <p className="highest-bid-label">Current Highest Bid</p>
                         <div className="highest-bid-amount">₹ {selectedAuction.highestBid}</div>
@@ -597,32 +835,32 @@ const Auction = () => {
                       <div className="bid-form">
                         <div className="bid-input-wrapper">
                           <span className="currency-symbol">₹</span>
-                          <input
+                <input
                             type="text"
                             className="bid-input"
-                            placeholder="Enter your bid"
-                            value={bidAmounts[selectedAuction._id] || ""}
-                            onChange={(e) => handleBidChange(e, selectedAuction._id)}
+                  placeholder="Enter your bid"
+                  value={bidAmounts[selectedAuction._id] || ""}
+                  onChange={(e) => handleBidChange(e, selectedAuction._id)}
                             disabled={!userId || isSubmitting}
-                          />
+                />
                         </div>
-                        <button
+                <button
                           className="bid-button"
                           onClick={() => handlePlaceBid(selectedAuction._id)}
                           disabled={!userId || isSubmitting}
                         >
                           {isSubmitting ? "Submitting..." : "Place Bid"}
-                        </button>
-                      </div>
+                </button>
+              </div>
 
-                      {!userId && (
+              {!userId && (
                         <p className="login-notice">
                           Please <Link to="/signin">log in</Link> to place a bid
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
               </div>
             </div>
           </div>
@@ -648,64 +886,7 @@ const Auction = () => {
             </button>
           </div>
         ) : (
-          <div className="auction-grid">
-            {filteredAuctions.map((item) => (
-              <div key={item._id} className="auction-card card-hover slide-up">
-                <div 
-                  className="auction-card-image" 
-                  style={{backgroundImage: `url(${item.image})`}}
-                  onClick={() => handleCardClick(item)}
-                >
-                  {userId && (
-                    <button 
-                      className={`card-watchlist-button ${watchlist.includes(item._id) ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleWatchlist(item._id);
-                      }}
-                    >
-                      <FaHeart />
-                    </button>
-                  )}
-                  {item.category && (
-                    <div className="card-category-tag">{item.category}</div>
-                  )}
-                </div>
-                <div className="auction-card-body" onClick={() => handleCardClick(item)}>
-                  <h5 className="auction-card-title">{item.title}</h5>
-                  <p className="auction-card-description">{item.description}</p>
-                  
-                  <div className="auction-card-meta">
-                    <div className="auction-price">
-                      <span className="price-label">Current Bid:</span>
-                      <span className="price-value">₹ {item.highestBid || item.startingBid}</span>
-                    </div>
-                    <div className="auction-time">
-                      <span className="time-icon">⏱️</span>
-                      <span className="time-value">{countdowns[item._id] || "Loading..."}</span>
-                    </div>
-                  </div>
-
-                  {item.bids?.length > 0 ? (
-                    <div className="auction-bid-info">
-                      <span className="bid-count">{item.bids.length} {item.bids.length === 1 ? 'bid' : 'bids'}</span>
-                      {item.highestBidder && (
-                        <span className="bidder-name">by {item.highestBidder.name}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="no-bids">
-                      No bids yet - Be the first!
-                    </p>
-                  )}
-                  
-                  <button className="view-auction-btn">
-                    Bid Now <FaArrowRight />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          renderAuctions()
         )}
       </div>
     </div>

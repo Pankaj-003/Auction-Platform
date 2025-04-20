@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaPaperPlane, FaUser, FaEnvelope, FaComment } from "react-icons/fa";
 import { useAlert } from "./AlertProvider";
-import "../contact.css";
+import "../styles/contact.css";
 
 const Contact = () => {
   const [formData, setFormData] = useState({

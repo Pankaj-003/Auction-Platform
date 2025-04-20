@@ -1,23 +1,13 @@
 import React from 'react';
-import { FaMoon, FaSun } from 'react-icons/fa';
 import { useTheme } from '../context/ThemeProvider';
 
 const ThemeToggle = () => {
+  // Keep the functionality but don't render the button
+  // This ensures any code that uses this component won't break
   const { theme, toggleTheme } = useTheme();
   
-  return (
-    <button 
-      className="theme-toggle" 
-      onClick={toggleTheme}
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-    >
-      {theme === 'light' ? (
-        <FaMoon className="icon" />
-      ) : (
-        <FaSun className="icon" />
-      )}
-    </button>
-  );
+  // Return null instead of the button to effectively remove it from the UI
+  return null;
 };
 
 export default ThemeToggle; 

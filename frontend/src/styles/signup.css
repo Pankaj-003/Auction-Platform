@@ -1,0 +1,416 @@
+/* Signup.css */
+
+/* Theme-aware Authentication Styling */
+:root {
+  /* Light Theme Colors */
+  --light-bg: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+  --light-card-bg: #ffffff;
+  --light-text: #333333;
+  --light-subtitle: #666666;
+  --light-input-bg: #f5f7fa;
+  --light-input-border: #e1e5eb;
+  --light-input-text: #333;
+  --light-primary: #6366f1;
+  --light-primary-hover: #4f46e5;
+  --light-primary-glow: rgba(99, 102, 241, 0.4);
+  --light-link: #6366f1;
+  --light-error: #ef4444;
+  --light-shadow: rgba(0, 0, 0, 0.1);
+  --light-profile-bg: #e4e8f0;
+  --light-placeholder-icon: #6366f1;
+  
+  /* Dark Theme Colors */
+  --dark-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --dark-card-bg: #1e1e2d;
+  --dark-text: #f1f5f9;
+  --dark-subtitle: #cbd5e1;
+  --dark-input-bg: #2d3748;
+  --dark-input-border: #4b5563;
+  --dark-input-text: #f1f5f9;
+  --dark-primary: #8b5cf6;
+  --dark-primary-hover: #7c3aed;
+  --dark-primary-glow: rgba(139, 92, 246, 0.4);
+  --dark-link: #a78bfa;
+  --dark-error: #f87171;
+  --dark-shadow: rgba(0, 0, 0, 0.3);
+  --dark-profile-bg: #4b5563;
+  --dark-placeholder-icon: #a78bfa;
+}
+
+/* Container for auth pages */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+/* Theme variants */
+.auth-container.light {
+  background: var(--light-bg);
+  color: var(--light-text);
+}
+
+.auth-container.dark {
+  background: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+/* Auth card */
+.auth-card {
+  width: 450px;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.light .auth-card {
+  background: var(--light-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .auth-card {
+  background: var(--dark-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Typography */
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, #6366f1, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.dark .auth-title {
+  background: linear-gradient(to right, #8b5cf6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.auth-subtitle {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.light .auth-subtitle {
+  color: var(--light-subtitle);
+}
+
+.dark .auth-subtitle {
+  color: var(--dark-subtitle);
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.light .input-group {
+  background: var(--light-input-bg);
+  border: 1px solid var(--light-input-border);
+}
+
+.dark .input-group {
+  background: var(--dark-input-bg);
+  border: 1px solid var(--dark-input-border);
+}
+
+.input-group-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.light .input-group-icon {
+  color: var(--light-primary);
+}
+
+.dark .input-group-icon {
+  color: var(--dark-primary);
+}
+
+.auth-input, .auth-select {
+  flex: 1;
+  height: 48px;
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.light .auth-input, .light .auth-select {
+  background: var(--light-input-bg);
+  color: var(--light-input-text);
+}
+
+.dark .auth-input, .dark .auth-select {
+  background: var(--dark-input-bg);
+  color: var(--dark-input-text);
+}
+
+.auth-input::placeholder {
+  opacity: 0.7;
+}
+
+.auth-input:focus, .auth-select:focus {
+  outline: none;
+}
+
+.light .input-group:focus-within {
+  box-shadow: 0 0 0 2px var(--light-primary-glow);
+}
+
+.dark .input-group:focus-within {
+  box-shadow: 0 0 0 2px var(--dark-primary-glow);
+}
+
+/* Profile picture upload */
+.profile-upload-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.light .profile-upload-container {
+  background: var(--light-profile-bg);
+  border: 3px solid var(--light-primary);
+  box-shadow: 0 4px 15px var(--light-shadow);
+}
+
+.dark .profile-upload-container {
+  background: var(--dark-profile-bg);
+  border: 3px solid var(--dark-primary);
+  box-shadow: 0 4px 15px var(--dark-shadow);
+}
+
+.profile-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.light .profile-placeholder {
+  color: var(--light-placeholder-icon);
+}
+
+.dark .profile-placeholder {
+  color: var(--dark-placeholder-icon);
+}
+
+.profile-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.light .camera-icon {
+  background: var(--light-primary);
+  color: white;
+  border: 2px solid white;
+}
+
+.dark .camera-icon {
+  background: var(--dark-primary);
+  color: white;
+  border: 2px solid var(--dark-card-bg);
+}
+
+.camera-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Button */
+.auth-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+}
+
+.light .auth-button {
+  background: var(--light-primary);
+  color: white;
+  box-shadow: 0 4px 10px var(--light-primary-glow);
+}
+
+.dark .auth-button {
+  background: var(--dark-primary);
+  color: white;
+  box-shadow: 0 4px 10px var(--dark-primary-glow);
+}
+
+.auth-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.light .auth-button:hover:not(:disabled) {
+  background: var(--light-primary-hover);
+  box-shadow: 0 6px 15px var(--light-primary-glow);
+}
+
+.dark .auth-button:hover:not(:disabled) {
+  background: var(--dark-primary-hover);
+  box-shadow: 0 6px 15px var(--dark-primary-glow);
+}
+
+.auth-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Footer link area */
+.alternate-action {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.light .alternate-action {
+  color: var(--light-subtitle);
+}
+
+.dark .alternate-action {
+  color: var(--dark-subtitle);
+}
+
+.auth-link {
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.light .auth-link {
+  color: var(--light-link);
+}
+
+.dark .auth-link {
+  color: var(--dark-link);
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Error messages */
+.error-message {
+  color: var(--light-error);
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.dark .error-message {
+  color: var(--dark-error);
+}
+
+.password-requirements {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.light .password-requirements {
+  color: var(--light-subtitle);
+}
+
+.dark .password-requirements {
+  color: var(--dark-subtitle);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive styles */
+@media (max-width: 576px) {
+  .auth-card {
+    width: 100%;
+    padding: 1.5rem;
+  }
+  
+  .auth-title {
+    font-size: 1.5rem;
+  }
+  
+  .auth-subtitle {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-container {
+    padding: 1rem;
+  }
+  
+  .profile-upload-container {
+    width: 100px;
+    height: 100px;
+  }
+} 

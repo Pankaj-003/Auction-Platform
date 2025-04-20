@@ -1,25 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import "../Navbar.css";
-import { authAPI, handleLogout } from "../api";
+import "../styles/Navbar.css";
+import { getUserProfile } from "../api/auth";
 import { FaChevronDown, FaUser, FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa";
 import { useTheme } from "../context/ThemeProvider";
+import { AuthContext } from "../context/AuthContext";
 
-const Navbar = ({ isAuthenticated, user, onLogout }) => {
+const Navbar = () => {
+  const { isAuthenticated, user, logout } = useContext(AuthContext);
   const [userProfile, setUserProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  // Load user from props or localStorage
+  // Load user from context or localStorage
   useEffect(() => {
     if (user) {
       setUserProfile(user);
     } else if (isAuthenticated) {
-      // If not provided via props, try to load from localStorage
+      // If not provided via context, try to load from localStorage
       const storedUser = localStorage.getItem("user");
       
       if (storedUser) {
@@ -35,23 +37,26 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
     }
   }, [user, isAuthenticated]);
 
-  // Logout handler - use provided handler or default implementation
+  // Logout handler
   const handleLogoutClick = () => {
-    if (onLogout) {
-      onLogout();
-    } else {
-      // Default logout if no handler provided
-      handleLogout();
-    }
+    logout();
     setShowDropdown(false);
   };
 
   // Function to fetch user profile from MongoDB
   const fetchUserProfile = async (userId) => {
     try {
-      const response = await authAPI.getUserProfile(userId);
+      if (!userId) {
+        console.error("Cannot fetch profile: User ID is missing");
+        return;
+      }
       
-      if (response.data) {
+      console.log(`Navbar: Fetching profile for user ID: ${userId}`);
+      const response = await getUserProfile(userId);
+      
+      if (response && response.data) {
+        console.log("Navbar: User profile fetched successfully");
+        
         // Update only the userProfile state with the latest data
         setUserProfile(prev => ({
           ...prev,
@@ -63,7 +68,7 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
         }));
         
         // Also update localStorage with the latest profile data
-        const storedUser = JSON.parse(localStorage.getItem("user"));
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         localStorage.setItem("user", JSON.stringify({
           ...storedUser,
           userId: userId,
@@ -72,9 +77,12 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
           email: response.data.email,
           role: response.data.role
         }));
+        
+        console.log("Navbar: Updated user profile in localStorage");
       }
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      console.error("Navbar: Error fetching user profile:", error);
+      // Don't throw - just log the error since this is a secondary function
     }
   };
 
@@ -148,11 +156,6 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
               </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/sell">
-                Sell
-              </Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link" to="/contact">
                 Contact
               </Link>
@@ -160,16 +163,6 @@ const Navbar = ({ isAuthenticated, user, onLogout }) => {
 
             {isAuthenticated && (
               <>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/mybids">
-                    My Bids
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/winners">
-                    Winners
-                  </Link>
-                </li>
                 <li className="nav-item">
                   <button 
                     className="theme-toggle-navbar" 

@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import Auction from "../models/Auction.js";
 import Activity from "../models/activity.model.js";
 import { verifyToken } from "../middleware/auth.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -11,6 +12,11 @@ const router = express.Router();
 router.get("/:userId", verifyToken, async (req, res) => {
   try {
     const userId = req.params.userId;
+    
+    // Validate userId is a valid ObjectId
+    if (!userId || userId === 'undefined' || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
     
     // Verify user exists
     const user = await User.findById(userId);
@@ -26,7 +32,7 @@ router.get("/:userId", verifyToken, async (req, res) => {
     res.status(200).json(watchlistItems);
   } catch (error) {
     console.error("Error retrieving watchlist:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -36,8 +42,13 @@ router.post("/:userId", verifyToken, async (req, res) => {
     const userId = req.params.userId;
     const { auctionId } = req.body;
     
-    if (!auctionId) {
-      return res.status(400).json({ message: "Auction ID is required" });
+    // Validate both userId and auctionId
+    if (!userId || userId === 'undefined' || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    if (!auctionId || auctionId === 'undefined' || !mongoose.Types.ObjectId.isValid(auctionId)) {
+      return res.status(400).json({ message: "Invalid auction ID" });
     }
     
     // Verify user exists
@@ -72,7 +83,7 @@ router.post("/:userId", verifyToken, async (req, res) => {
     res.status(201).json({ message: "Added to watchlist", watchlistItem });
   } catch (error) {
     console.error("Error adding to watchlist:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -80,6 +91,15 @@ router.post("/:userId", verifyToken, async (req, res) => {
 router.delete("/:userId/:auctionId", verifyToken, async (req, res) => {
   try {
     const { userId, auctionId } = req.params;
+    
+    // Validate both userId and auctionId
+    if (!userId || userId === 'undefined' || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    if (!auctionId || auctionId === 'undefined' || !mongoose.Types.ObjectId.isValid(auctionId)) {
+      return res.status(400).json({ message: "Invalid auction ID" });
+    }
     
     // Verify user exists
     const user = await User.findById(userId);
@@ -97,13 +117,19 @@ router.delete("/:userId/:auctionId", verifyToken, async (req, res) => {
     res.status(200).json({ message: "Removed from watchlist" });
   } catch (error) {
     console.error("Error removing from watchlist:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // Helper function to add activity
 async function addUserActivity(userId, type, message) {
   try {
+    // Validate userId before creating activity
+    if (!userId || userId === 'undefined' || !mongoose.Types.ObjectId.isValid(userId)) {
+      console.error("Invalid userId for activity:", userId);
+      return;
+    }
+    
     const activity = new Activity({
       userId,
       type,
