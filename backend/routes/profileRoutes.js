@@ -1,5 +1,6 @@
 import express from 'express';
 import { getActiveBids, getWonAuctions, getUserListings, getProfileSummary, getAuctionBidHistory } from '../controllers/profileController.js';
+import { getRecentActivities } from '../controllers/activityController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -21,5 +22,8 @@ router.get('/listings/:userId', getUserListings);
 
 // Get bid history for specific auction
 router.get('/bid-history/:userId/:auctionId', getAuctionBidHistory);
+
+// Get all recent activities for user (both buyer and seller activities)
+router.get('/activities/:userId', getRecentActivities);
 
 export default router; 

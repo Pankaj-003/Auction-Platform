@@ -157,6 +157,11 @@ export const getProfileSummary = async (req, res) => {
       endTime: { $gt: now }
     });
     
+    // Total listings count (all listings ever created by this user)
+    const totalListingsCount = await Auction.countDocuments({
+      seller: userId
+    });
+    
     // Total bids placed
     const totalBidsPlaced = await Bid.countDocuments({ userId });
     
@@ -175,6 +180,7 @@ export const getProfileSummary = async (req, res) => {
         activeBids: activeBidsCount,
         wonAuctions: wonAuctionsCount,
         activeListings: activeListingsCount,
+        totalListings: totalListingsCount,
         totalBidsPlaced
       },
       recentActivity: recentBids.map(bid => ({

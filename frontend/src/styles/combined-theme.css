@@ -1,0 +1,167 @@
+/* ============================================
+   THEME SYSTEM
+   Support for light/dark mode with smooth transitions
+   ============================================ */
+
+:root {
+  /* Theme Transition */
+  --theme-transition-duration: 0.3s;
+  --theme-transition-timing: ease;
+  --transition-speed: 0.3s;
+  
+  /* Border Radius */
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  /* Brand Colors (don't change with theme) */
+  --primary-color: #3498db;
+  --primary-hover: #2980b9;
+  --secondary-color: #f39c12;
+  --secondary-hover: #e67e22;
+  --success-color: #2ecc71;
+  --danger-color: #e74c3c;
+  --warning-color: #f1c40f;
+  --info-color: #3498db;
+  
+  /* Focus */
+  --focus-ring-color: rgba(76, 201, 240, 0.5);
+  --focus-ring-width: 3px;
+}
+
+/* Light Theme */
+body[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #f0f0f0;
+  
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #6c757d;
+  
+  --border-color: #dee2e6;
+  --border-dark: #ced4da;
+  
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
+  
+  --stats-card-bg: #ffffff;
+  --navbar-bg: #ffffff;
+  
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme */
+body[data-theme="dark"] {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-card: #2a2a2a;
+  --bg-elevated: #3a3a3a;
+  
+  --text-primary: #f8f9fa;
+  --text-secondary: #e2e2e2;
+  --text-muted: #b0b0b0;
+  
+  --border-color: #444444;
+  --border-dark: #555555;
+  
+  --input-bg: #2c2c2c;
+  --input-border: #555555;
+  
+  --stats-card-bg: #2a2a2a;
+  --navbar-bg: #1a1a1a;
+  
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Global styles for dark mode */
+body[data-theme="dark"] {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Card styling for theme support */
+body[data-theme="dark"] .card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom-color: var(--border-color);
+}
+
+/* List group item styling for theme support */
+body[data-theme="dark"] .list-group-item {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Form control styling for theme support */
+body[data-theme="dark"] .form-control {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+body[data-theme="dark"] .form-control:focus {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+}
+
+/* Bootstrap overrides for dark theme */
+body[data-theme="dark"] .btn-dark {
+  background-color: #343a40;
+  border-color: #23272b;
+}
+
+body[data-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Add smooth transitions for theme switching */
+body, 
+.card,
+.form-control,
+.list-group-item,
+.btn {
+  transition: 
+    background-color var(--transition-speed), 
+    color var(--transition-speed), 
+    border-color var(--transition-speed);
+}
+
+/* Theme Toggle Styles */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px var(--shadow-color);
+  z-index: 999;
+  border: none;
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  background-color: var(--primary-hover);
+} 

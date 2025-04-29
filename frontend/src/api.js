@@ -128,6 +128,23 @@ export const bidAPI = {
   getAuctionBids: (auctionId) => api.get(`/api/bids/auction/${auctionId}`),
 };
 
+// Watchlist API calls
+export const watchlistAPI = {
+  getWatchlist: (userId) => api.get(`/api/watchlist/${userId}`),
+  addToWatchlist: (userId, auctionId) => api.post('/api/watchlist', { userId, auctionId }),
+  removeFromWatchlist: (watchlistId, userId) => api.delete(`/api/watchlist/${watchlistId}`, { data: { userId } }),
+  checkWatchlistStatus: (userId, auctionId) => api.get(`/api/watchlist/check/${userId}/${auctionId}`),
+};
+
+// Profile API calls
+export const profileAPI = {
+  getProfileSummary: (userId) => api.get(`/api/profile/summary/${userId}`),
+  getActiveBids: (userId) => api.get(`/api/profile/active-bids/${userId}`),
+  getWonAuctions: (userId) => api.get(`/api/profile/won-auctions/${userId}`),
+  getUserListings: (userId) => api.get(`/api/profile/listings/${userId}`),
+  getBidHistory: (userId, auctionId) => api.get(`/api/profile/bid-history/${userId}/${auctionId}`),
+};
+
 // Utility functions
 export const getAuthHeader = () => {
   const token = localStorage.getItem("token");

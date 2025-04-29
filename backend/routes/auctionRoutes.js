@@ -12,7 +12,31 @@ router.post("/add", async (req, res) => {
     const { title, description, image, startingBid, endDate, seller, category } = req.body;
 
     if (!title || !description || !image || !startingBid || !endDate) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: "Required fields: title, description, image, startingBid, endDate" });
+    }
+
+    // Verify seller exists
+    let sellerId = seller;
+    
+    // If seller is not provided, check for user ID in token
+    if (!sellerId && req.user && req.user.id) {
+      sellerId = req.user.id;
+    }
+    
+    // If we still don't have a seller, return an error
+    if (!sellerId) {
+      return res.status(400).json({ error: "Seller ID is required" });
+    }
+    
+    // Verify that the seller is a valid user
+    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({ error: "Invalid seller ID format" });
+    }
+    
+    // Check if seller exists in the database
+    const sellerExists = await User.findById(sellerId);
+    if (!sellerExists) {
+      return res.status(404).json({ error: "Seller not found in database" });
     }
 
     const endTime = new Date(endDate + "T23:59:59");
@@ -33,7 +57,7 @@ router.post("/add", async (req, res) => {
       endTime,
       isEnded: false,
       winner: null,
-      seller: seller || null,
+      seller: sellerId,
       category: category || "Uncategorized"
     });
 

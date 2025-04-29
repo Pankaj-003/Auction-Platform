@@ -157,4 +157,123 @@
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
+}
+
+/* User Listings Section */
+.listings-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: var(--bg-secondary, #ffffff);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.listings-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.listing-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  overflow: hidden;
+}
+
+.listing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.listing-img-container {
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+}
+
+.listing-img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.listing-card:hover .listing-img {
+  transform: scale(1.05);
+}
+
+.listing-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.listing-badge.active {
+  background-color: #10b981;
+  color: white;
+}
+
+.listing-badge.sold {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.listing-badge.ended {
+  background-color: #6b7280;
+  color: white;
+}
+
+.listing-details {
+  padding: 1rem;
+}
+
+.listing-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listing-price {
+  font-weight: bold;
+  color: var(--primary-color, #3498db);
+}
+
+.listing-date {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.view-all-btn {
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+/* Add styles for embedded version in profile page */
+.embedded-sell-container {
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.embedded-sell-container .sell-card {
+  box-shadow: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+}
+
+.embedded-sell-container .category-selector {
+  flex-wrap: wrap;
+}
+
+.embedded-sell-container .category-option {
+  margin-bottom: 0.5rem;
 } 

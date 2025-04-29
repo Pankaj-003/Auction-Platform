@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Navbar.css";
 import { getUserProfile } from "../api/auth";
-import { FaChevronDown, FaUser, FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa";
+import { FaChevronDown, FaUser, FaSignOutAlt, FaMoon, FaSun, FaTrophy } from "react-icons/fa";
 import { useTheme } from "../context/ThemeProvider";
 import { AuthContext } from "../context/AuthContext";
 
@@ -153,6 +153,11 @@ const Navbar = () => {
             <li className="nav-item">
               <Link className="nav-link" to="/">
                 Auctions
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/winners">
+                <FaTrophy className="me-1" /> Winners
               </Link>
             </li>
             <li className="nav-item">

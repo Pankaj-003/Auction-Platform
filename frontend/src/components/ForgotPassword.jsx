@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
-import { FaEnvelope, FaRedo } from "react-icons/fa";
+import { FaEnvelope, FaRedo, FaArrowLeft } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/auth.css";
 import { useTheme } from "../context/ThemeProvider";
 
-const ForgotPassword = () => {
+const ForgotPassword = ({ onBack }) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -46,7 +46,29 @@ const ForgotPassword = () => {
 
   return (
     <div className={`auth-container ${isDark ? 'dark' : 'light'}`}>
+      <div className="particle"></div>
+      <div className="particle"></div>
+      <div className="particle"></div>
       <div className="auth-card">
+        {onBack && (
+          <button 
+            className="back-button" 
+            onClick={onBack}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '1rem',
+              color: isDark ? 'var(--dark-link)' : 'var(--light-link)'
+            }}
+          >
+            <FaArrowLeft style={{ marginRight: '0.5rem' }} />
+            Back to Sign In
+          </button>
+        )}
+        
         <div className="text-center mb-4">
           <h2 className="auth-title">Forgot Password</h2>
           <p className="auth-subtitle">Enter your email to receive reset instructions</p>
@@ -97,14 +119,16 @@ const ForgotPassword = () => {
             )}
           </button>
 
-          <div className="text-center mt-3">
-            <p className="alternate-action">
-              Remember your password?{" "}
-              <Link to="/signin" className="auth-link">
-                Sign In
-              </Link>
-            </p>
-          </div>
+          {!onBack && (
+            <div className="text-center mt-3">
+              <p className="alternate-action">
+                Remember your password?{" "}
+                <Link to="/signin" className="auth-link">
+                  Sign In
+                </Link>
+              </p>
+            </div>
+          )}
         </form>
       </div>
 

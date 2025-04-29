@@ -1,11 +1,12 @@
-/* Theme-aware Authentication Styling */
+/* Enhanced Futuristic Authentication Styling */
 :root {
   /* Light Theme Colors */
   --light-bg: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-  --light-card-bg: #ffffff;
+  --light-card-bg: rgba(255, 255, 255, 0.95);
+  --light-card-border: rgba(255, 255, 255, 0.5);
   --light-text: #333333;
   --light-subtitle: #666666;
-  --light-input-bg: #f5f7fa;
+  --light-input-bg: rgba(245, 247, 250, 0.7);
   --light-input-border: #e1e5eb;
   --light-input-text: #333;
   --light-primary: #6366f1;
@@ -13,16 +14,18 @@
   --light-primary-glow: rgba(99, 102, 241, 0.4);
   --light-link: #6366f1;
   --light-error: #ef4444;
+  --light-success: #10b981;
   --light-shadow: rgba(0, 0, 0, 0.1);
   --light-profile-bg: #e4e8f0;
   --light-placeholder-icon: #6366f1;
   
   /* Dark Theme Colors */
   --dark-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --dark-card-bg: #1e1e2d;
+  --dark-card-bg: rgba(30, 30, 45, 0.95);
+  --dark-card-border: rgba(255, 255, 255, 0.1);
   --dark-text: #f1f5f9;
   --dark-subtitle: #cbd5e1;
-  --dark-input-bg: #2d3748;
+  --dark-input-bg: rgba(45, 55, 72, 0.7);
   --dark-input-border: #4b5563;
   --dark-input-text: #f1f5f9;
   --dark-primary: #8b5cf6;
@@ -30,18 +33,21 @@
   --dark-primary-glow: rgba(139, 92, 246, 0.4);
   --dark-link: #a78bfa;
   --dark-error: #f87171;
+  --dark-success: #34d399;
   --dark-shadow: rgba(0, 0, 0, 0.3);
   --dark-profile-bg: #4b5563;
   --dark-placeholder-icon: #a78bfa;
 }
 
-/* Container for auth pages */
+/* Container for auth pages with futuristic grid background */
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   padding: 2rem;
+  position: relative;
+  overflow: hidden;
   transition: all 0.3s ease;
 }
 
@@ -56,27 +62,96 @@
   color: var(--dark-text);
 }
 
-/* Auth card */
+/* Add futuristic grid background */
+.auth-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  transform: perspective(500px) rotateX(60deg) scale(2.5);
+  transform-origin: bottom;
+  animation: gridMove 30s linear infinite;
+  opacity: 0.3;
+  z-index: 0;
+}
+
+.dark.auth-container::before {
+  background-image: 
+    linear-gradient(rgba(139, 92, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+}
+
+@keyframes gridMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 30px 0;
+  }
+}
+
+/* Auth card with glassmorphism */
 .auth-card {
+  position: relative;
   width: 450px;
   padding: 2.5rem;
   border-radius: 1rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  overflow: hidden;
   transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Add subtle card glow effects */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(99, 102, 241, 0.1) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  z-index: -1;
+  animation: pulseGlow 8s ease-in-out infinite;
+}
+
+.dark .auth-card::before {
+  background: radial-gradient(
+    circle at center,
+    rgba(139, 92, 246, 0.1) 0%,
+    transparent 70%
+  );
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 .light .auth-card {
   background: var(--light-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--light-card-border);
 }
 
 .dark .auth-card {
   background: var(--dark-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--dark-card-border);
 }
 
-/* Typography */
+/* Typography with enhanced styling */
 .auth-title {
   font-size: 1.75rem;
   font-weight: 700;
@@ -86,6 +161,7 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
+  letter-spacing: 0.5px;
 }
 
 .dark .auth-title {
@@ -99,6 +175,7 @@
 .auth-subtitle {
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
+  letter-spacing: 0.2px;
 }
 
 .light .auth-subtitle {
@@ -109,7 +186,7 @@
   color: var(--dark-subtitle);
 }
 
-/* Form elements */
+/* Form elements with enhanced styling */
 .form-group {
   margin-bottom: 1.25rem;
   position: relative;
@@ -180,13 +257,15 @@
 
 .light .input-group:focus-within {
   box-shadow: 0 0 0 2px var(--light-primary-glow);
+  border-color: var(--light-primary);
 }
 
 .dark .input-group:focus-within {
   box-shadow: 0 0 0 2px var(--dark-primary-glow);
+  border-color: var(--dark-primary);
 }
 
-/* Profile picture upload */
+/* Profile picture upload with enhanced styling */
 .profile-upload-container {
   position: relative;
   width: 120px;
@@ -251,34 +330,33 @@
 .light .camera-icon {
   background: var(--light-primary);
   color: white;
-  border: 2px solid white;
+  box-shadow: 0 2px 5px var(--light-shadow);
 }
 
 .dark .camera-icon {
   background: var(--dark-primary);
   color: white;
-  border: 2px solid var(--dark-card-bg);
+  box-shadow: 0 2px 5px var(--dark-shadow);
 }
 
 .camera-icon:hover {
   transform: scale(1.1);
 }
 
-/* Button */
+/* Button styling with enhanced effects */
 .auth-button {
+  width: 100%;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 48px;
-  padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  border: none;
-  font-size: 1rem;
   font-weight: 600;
+  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .light .auth-button {
@@ -312,11 +390,39 @@
   cursor: not-allowed;
 }
 
-/* Footer link area */
+/* Add ripple effect to button */
+.auth-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 50%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.auth-button:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(100, 100);
+    opacity: 0;
+  }
+}
+
 .alternate-action {
-  margin-top: 1rem;
   font-size: 0.95rem;
-  text-align: center;
+  margin-top: 1.5rem;
 }
 
 .light .alternate-action {
@@ -330,7 +436,8 @@
 .auth-link {
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .light .auth-link {
@@ -345,33 +452,41 @@
   text-decoration: underline;
 }
 
-/* Error messages */
+/* Error and success messages */
 .error-message {
   color: var(--light-error);
+  font-size: 0.9rem;
   margin-top: 0.5rem;
-  font-size: 0.85rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 .dark .error-message {
   color: var(--dark-error);
+  background-color: rgba(248, 113, 113, 0.1);
 }
 
-/* Success messages */
 .success-message {
-  color: #10b981; /* Light theme success color */
+  color: var(--light-success);
+  font-size: 0.9rem;
   margin-top: 0.5rem;
-  font-size: 0.85rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: rgba(16, 185, 129, 0.1);
 }
 
 .dark .success-message {
-  color: #34d399; /* Dark theme success color */
+  color: var(--dark-success);
+  background-color: rgba(52, 211, 153, 0.1);
 }
 
 .password-requirements {
-  display: block;
   font-size: 0.8rem;
   margin-top: 0.5rem;
-  transition: color 0.3s ease;
+  opacity: 0.8;
+  display: block;
+  line-height: 1.4;
 }
 
 .light .password-requirements {
@@ -382,24 +497,21 @@
   color: var(--dark-subtitle);
 }
 
-/* Loading spinner */
+/* Spinner animation */
 .spinner {
-  margin-right: 0.5rem;
   width: 20px;
   height: 20px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: white;
+  border-top-color: #fff;
   animation: spin 0.8s linear infinite;
+  margin-right: 0.5rem;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -411,11 +523,65 @@
   }
 }
 
+/* Adding decorative particles to the background */
+.auth-container .particle {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 0;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.light .auth-container .particle {
+  background: var(--light-primary);
+  box-shadow: 0 0 10px var(--light-primary-glow);
+}
+
+.dark .auth-container .particle {
+  background: var(--dark-primary);
+  box-shadow: 0 0 10px var(--dark-primary-glow);
+}
+
+.auth-container .particle:nth-child(1) {
+  width: 100px;
+  height: 100px;
+  top: 10%;
+  left: 10%;
+  animation: float 8s ease-in-out infinite;
+  opacity: 0.05;
+}
+
+.auth-container .particle:nth-child(2) {
+  width: 150px;
+  height: 150px;
+  bottom: 10%;
+  right: 10%;
+  animation: float 12s ease-in-out infinite;
+  opacity: 0.07;
+}
+
+.auth-container .particle:nth-child(3) {
+  width: 70px;
+  height: 70px;
+  top: 50%;
+  right: 20%;
+  animation: float 10s ease-in-out infinite;
+  opacity: 0.04;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+  }
+}
+
 .auth-card {
   animation: fadeIn 0.5s ease-out;
 }
 
-/* Responsive styles */
 @media (max-width: 576px) {
   .auth-card {
     width: 100%;
@@ -427,7 +593,7 @@
   }
   
   .auth-subtitle {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -442,131 +608,152 @@
   }
 }
 
-/* Role selector specific styles */
+/* Role selector styles for signup */
 .role-selector-card {
-  max-width: 900px;
-  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .role-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin: 2rem 0;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .role-option {
-  flex: 1;
-  min-width: 280px;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
   padding: 1.5rem;
+  border-radius: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.light .role-option {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .dark .role-option {
-  border-color: #444;
-  background-color: #333;
+  background: rgba(45, 55, 72, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .role-option:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .role-option.selected {
-  border-color: #4e6bff;
-  background-color: rgba(78, 107, 255, 0.05);
-  box-shadow: 0 8px 15px rgba(78, 107, 255, 0.2);
+  border-width: 2px;
+  transform: translateY(-5px);
+}
+
+.light .role-option.selected {
+  border-color: var(--light-primary);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
 }
 
 .dark .role-option.selected {
-  border-color: #667eea;
-  background-color: rgba(102, 126, 234, 0.15);
+  border-color: var(--dark-primary);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.15);
 }
 
 .role-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background-color: #f0f4ff;
-  margin: 0 auto 1rem;
-  position: relative;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.light .role-icon {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--light-primary);
 }
 
 .dark .role-icon {
-  background-color: #2d3748;
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--dark-primary);
 }
 
 .role-option.selected .role-icon {
-  background-color: #4e6bff;
+  transform: scale(1.1);
+}
+
+.light .role-option.selected .role-icon {
+  background: var(--light-primary);
   color: white;
 }
 
 .dark .role-option.selected .role-icon {
-  background-color: #667eea;
+  background: var(--dark-primary);
+  color: white;
 }
 
 .check-icon {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  background-color: #10b981;
-  color: white;
+  top: 1rem;
+  right: 1rem;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  padding: 3px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--light-primary);
+  color: white;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s ease;
+}
+
+.role-option.selected .check-icon {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .role-option h3 {
-  text-align: center;
-  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
 .role-option p {
-  text-align: center;
+  font-size: 0.9rem;
   margin-bottom: 1rem;
-  color: #666;
 }
 
 .dark .role-option p {
-  color: #aaa;
+  color: var(--dark-subtitle);
 }
 
 .role-option ul {
   padding-left: 1.5rem;
-  margin-bottom: 0;
 }
 
 .role-option li {
+  font-size: 0.85rem;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
 }
 
 .continue-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto;
+  margin-top: 2rem;
 }
 
 @media (max-width: 768px) {
   .role-options {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   
   .role-option {
-    min-width: 100%;
+    padding: 1.25rem;
   }
 } 

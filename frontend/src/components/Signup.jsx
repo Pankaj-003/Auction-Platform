@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FaCamera, FaEnvelope, FaLock, FaUser, FaUserTag, FaUserPlus } from "react-icons/fa";
@@ -207,6 +207,9 @@ const Signup = () => {
 
   return (
     <div className={`auth-container ${isDark ? 'dark' : 'light'}`}>
+      <div className="particle"></div>
+      <div className="particle"></div>
+      <div className="particle"></div>
       <div className="auth-card">
         <div className="text-center mb-4">
           <h2 className="auth-title">Create Account</h2>

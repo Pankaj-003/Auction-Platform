@@ -31,25 +31,41 @@ export const login = async (email, password) => {
 export const checkAuth = async () => {
   try {
     console.log('Validating authentication token...');
-    const response = await authAPI.validateToken();
-    const data = response.data;
-    console.log('Token validation response:', data.status);
-    
-    // If successful, return authentication status and user details
-    if (data.status === 'success' && data.user) {
-      // Update userId in localStorage if missing
-      if (data.user.id && (!localStorage.getItem('userId') || localStorage.getItem('userId') === 'undefined')) {
-        localStorage.setItem('userId', data.user.id);
-        console.log('Updated userId in localStorage:', data.user.id);
-      }
-      
-      return {
-        authenticated: true,
-        user: data.user
-      };
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token found in localStorage');
+      return { isAuthenticated: false, user: null };
     }
     
-    return { authenticated: false };
+    const response = await authAPI.validateToken();
+    console.log('Token validation response:', response);
+    
+    // Check if response contains user data
+    if (response && response.data) {
+      const data = response.data;
+      
+      // Check if response has the expected format
+      if (data.user) {
+        // Store user ID if available
+        if (data.user._id || data.user.id) {
+          const userId = data.user._id || data.user.id;
+          localStorage.setItem('userId', userId);
+          console.log('Updated userId in localStorage:', userId);
+          
+          // Store full user data
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        
+        return {
+          isAuthenticated: true,
+          user: data.user
+        };
+      }
+    }
+    
+    // Default to not authenticated if data format is unexpected
+    console.warn('Unexpected response format from validate-token endpoint');
+    return { isAuthenticated: false, user: null };
   } catch (error) {
     console.error('Authentication check failed:', error);
     
@@ -57,10 +73,11 @@ export const checkAuth = async () => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
+      localStorage.removeItem('user');
       console.log('Cleared tokens due to auth failure');
     }
     
-    return { authenticated: false };
+    return { isAuthenticated: false, user: null };
   }
 };
 

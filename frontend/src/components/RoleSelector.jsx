@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faStore, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faStore, faCheckCircle, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/roleSelector.css';
 
@@ -12,12 +12,25 @@ const RoleSelector = ({ isEmbedded = false }) => {
   const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [userId, setUserId] = useState('');
+  const [changingRole, setChangingRole] = useState(false);
+  const [currentRole, setCurrentRole] = useState('');
   
-  // Get the user ID on component mount
+  // Get the user ID and current role on component mount
   useEffect(() => {
     const storedUserId = user?.userId || localStorage.getItem('userId') || '';
     setUserId(storedUserId);
-    console.log('Current user ID:', storedUserId);
+    
+    const userRole = user?.role || JSON.parse(localStorage.getItem('user') || '{}').role || '';
+    setCurrentRole(userRole);
+    
+    // If user already has a role that is not 'unset', we're changing roles
+    if (userRole && userRole !== 'unset') {
+      setChangingRole(true);
+      // Pre-select the opposite role for easier switching
+      setSelectedRole(userRole === 'buyer' ? 'seller' : 'buyer');
+    }
+    
+    console.log('Current user ID:', storedUserId, 'Current role:', userRole);
   }, [user]);
 
   const handleRoleSelect = (role) => {
@@ -31,6 +44,18 @@ const RoleSelector = ({ isEmbedded = false }) => {
     if (!selectedRole) {
       setError('Please select a role');
       return;
+    }
+
+    // Don't do anything if selected role is the same as current role
+    if (changingRole && selectedRole === currentRole) {
+      if (isEmbedded) {
+        // Just refresh the page to update UI
+        window.location.reload();
+        return;
+      } else {
+        // Stay on current page
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -49,8 +74,8 @@ const RoleSelector = ({ isEmbedded = false }) => {
       
       // Use the right endpoint format
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      console.log(`${changingRole ? 'Changing' : 'Setting'} role to ${selectedRole}`);
       console.log('Making request to:', `${apiBaseUrl}/api/auth/set-role/${userId}`);
-      console.log('With token:', token.substring(0, 10) + '...');
       
       const response = await fetch(`${apiBaseUrl}/api/auth/set-role/${userId}`, {
         method: 'PATCH',
@@ -61,8 +86,6 @@ const RoleSelector = ({ isEmbedded = false }) => {
         body: JSON.stringify({ role: selectedRole }),
         credentials: 'include'
       });
-
-      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -80,22 +103,19 @@ const RoleSelector = ({ isEmbedded = false }) => {
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const updatedUser = {
         ...storedUser,
-        role: selectedRole
+        role: selectedRole,
+        roleSelected: true
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       console.log('Updated user in localStorage:', updatedUser);
       
-      // Redirect based on role if not embedded in profile
+      // Stay on the current page after role selection/change
       if (!isEmbedded) {
-        if (selectedRole === 'seller') {
-          navigate('/dashboard?view=seller');
-        } else {
-          navigate('/dashboard?view=buyer');
-        }
+        // For standalone role selector, just reload the current page
+        window.location.reload();
       } else {
-        // If embedded, redirect to the appropriate dashboard
-        console.log('Redirecting to dashboard with role:', selectedRole);
-        navigate(selectedRole === 'seller' ? '/dashboard?view=seller' : '/dashboard?view=buyer');
+        // For embedded in profile, reload the current page
+        window.location.reload();
       }
     } catch (err) {
       console.error('Role selection error:', err);
@@ -119,9 +139,14 @@ const RoleSelector = ({ isEmbedded = false }) => {
       <div className={cardClass}>
         {!isEmbedded && (
           <>
-            <h1 className="role-title">Choose Your Role</h1>
+            <h1 className="role-title">
+              {changingRole ? 'Change Your Role' : 'Choose Your Role'}
+              {changingRole && <FontAwesomeIcon icon={faExchangeAlt} className="ms-2" />}
+            </h1>
             <p className="role-description">
-              Select how you would like to use our platform
+              {changingRole 
+                ? 'You can switch between buyer and seller roles anytime'
+                : 'Select how you would like to use our platform'}
             </p>
           </>
         )}
@@ -129,7 +154,7 @@ const RoleSelector = ({ isEmbedded = false }) => {
         <form onSubmit={handleSubmit} className="role-form">
           <div className="role-options">
             <div 
-              className={`role-option ${selectedRole === 'buyer' ? 'selected' : ''}`}
+              className={`role-option ${selectedRole === 'buyer' ? 'selected' : ''} ${currentRole === 'buyer' ? 'current' : ''}`}
               onClick={() => handleRoleSelect('buyer')}
             >
               <div className="role-icon">
@@ -139,13 +164,16 @@ const RoleSelector = ({ isEmbedded = false }) => {
                     <FontAwesomeIcon icon={faCheckCircle} />
                   </span>
                 )}
+                {currentRole === 'buyer' && changingRole && (
+                  <span className="current-role-indicator">Current</span>
+                )}
               </div>
               <h3>Buyer</h3>
               <p>Bid on items and grow your collection</p>
             </div>
 
             <div 
-              className={`role-option ${selectedRole === 'seller' ? 'selected' : ''}`}
+              className={`role-option ${selectedRole === 'seller' ? 'selected' : ''} ${currentRole === 'seller' ? 'current' : ''}`}
               onClick={() => handleRoleSelect('seller')}
             >
               <div className="role-icon">
@@ -154,6 +182,9 @@ const RoleSelector = ({ isEmbedded = false }) => {
                   <span className="selected-check">
                     <FontAwesomeIcon icon={faCheckCircle} />
                   </span>
+                )}
+                {currentRole === 'seller' && changingRole && (
+                  <span className="current-role-indicator">Current</span>
                 )}
               </div>
               <h3>Seller</h3>
@@ -168,7 +199,7 @@ const RoleSelector = ({ isEmbedded = false }) => {
             className="role-submit-btn" 
             disabled={isLoading || !selectedRole}
           >
-            {isLoading ? 'Processing...' : 'Continue'}
+            {isLoading ? 'Processing...' : changingRole ? 'Switch Role' : 'Continue'}
           </button>
         </form>
       </div>

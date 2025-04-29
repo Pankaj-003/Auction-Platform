@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaPaperPlane, FaUser, FaEnvelope, FaComment } from "react-icons/fa";
 import { useAlert } from "./AlertProvider";
-import "../styles/contact.css";
+import "../styles/ContactUnique.css";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -78,102 +78,95 @@ const Contact = () => {
   };
 
   return (
-    <div className="contact-container grid-bg">
-      <div className="container">
-        <div className="contact-header">
-          <h1 className="gradient-text">Contact Us</h1>
-          <p className="contact-subheading">We'd love to hear from you</p>
-        </div>
-        
-        <div className="contact-content">
-          <div className="contact-info">
-            <div className="glass-panel contact-info-card">
+    <div className="contact-unique-container">
+      <h1 className="contact-title">Contact Us</h1>
+      <p className="contact-subtitle">We'd love to hear from you and help with any questions</p>
+      
+      <div className="row">
+        <div className="col-md-5 mb-4">
+          <div className="contact-info-box">
+            <div className="contact-info-header">
               <h3>Get in Touch</h3>
               <p>Have questions about our auction platform? Our team is here to help you with any inquiries.</p>
-              
-              <div className="contact-features">
-                <div className="contact-feature">
-                  <div className="feature-icon">
-                    <FaEnvelope />
-                  </div>
-                  <div className="feature-text">
-                    <h4>Email Support</h4>
-                    <p>support@auctionhub.com</p>
-                  </div>
+            </div>
+            
+            <div className="contact-info-body">
+              <div className="contact-info-item">
+                <div className="contact-icon-wrapper">
+                  <FaEnvelope />
                 </div>
-                
-                <div className="contact-feature">
-                  <div className="feature-icon">
-                    <FaComment />
-                  </div>
-                  <div className="feature-text">
-                    <h4>Live Chat</h4>
-                    <p>Available 24/7</p>
-                  </div>
+                <div className="contact-info-content">
+                  <h4>Email Support</h4>
+                  <p>support@auctionhub.com</p>
+                </div>
+              </div>
+              
+              <div className="contact-info-item">
+                <div className="contact-icon-wrapper">
+                  <FaComment />
+                </div>
+                <div className="contact-info-content">
+                  <h4>Live Chat</h4>
+                  <p>Available 24/7</p>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="contact-form-container">
-            <form onSubmit={handleSubmit} className="future-card contact-form">
-              <div className="form-group">
-                <label className="form-label">
-                  <FaUser className="input-icon" />
-                  <span>Full Name</span>
-                </label>
-                <input
-                  type="text"
-                  className="future-input"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter your full name"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">
-                  <FaEnvelope className="input-icon" />
-                  <span>Email Address</span>
-                </label>
-                <input
-                  type="email"
-                  className="future-input"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter your email"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">
-                  <FaComment className="input-icon" />
-                  <span>Message</span>
-                </label>
-                <textarea
-                  className="future-input"
-                  name="message"
-                  rows="4"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  placeholder="How can we help you?"
-                />
-              </div>
-              
-              <button 
-                type="submit" 
-                className="future-button submit-btn" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Sending..." : "Send Message"}
-                <FaPaperPlane />
-              </button>
-            </form>
+        </div>
+        
+        <div className="col-md-7">
+          <div className="contact-form-box">
+            <div className="card-body p-4">
+              <form onSubmit={handleSubmit}>
+                <div className="form-floating-label">
+                  <input
+                    type="text"
+                    className="form-floating-input"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter your full name"
+                  />
+                  <FaUser className="form-floating-icon" />
+                </div>
+                
+                <div className="form-floating-label">
+                  <input
+                    type="email"
+                    className="form-floating-input"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter your email"
+                  />
+                  <FaEnvelope className="form-floating-icon" />
+                </div>
+                
+                <div className="form-floating-label">
+                  <textarea
+                    className="form-floating-textarea"
+                    name="message"
+                    rows="4"
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
+                    placeholder="How can we help you?"
+                  />
+                  <FaComment className="form-floating-icon-textarea" />
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="submit-button" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Sending..." : "Send Message"}
+                  <FaPaperPlane className="submit-button-icon" />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

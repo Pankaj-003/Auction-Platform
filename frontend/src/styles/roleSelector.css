@@ -200,4 +200,40 @@
 
 .role-selector-container {
   animation: fadeIn 0.5s ease-out;
+}
+
+/* Add styles for current role indicator */
+.current-role-indicator {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4cc9f0;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.role-option.current {
+  border-color: #4cc9f0;
+  border-style: dashed;
+  border-width: 2px;
+}
+
+.role-option.current:not(.selected) {
+  background-color: rgba(76, 201, 240, 0.1);
+}
+
+.role-option.current:hover {
+  border-color: #4cc9f0;
+}
+
+.role-option.current.selected {
+  border-color: #4361ee;
+  border-style: solid;
 } 

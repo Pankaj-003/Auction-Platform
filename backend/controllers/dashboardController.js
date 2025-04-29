@@ -1,6 +1,6 @@
 import Bid from '../models/Bid.js';
 import Auction from '../models/Auction.js';
-import Watchlist from '../models/Watchlist.js';
+import Watchlist from '../models/watchlist.model.js';
 import User from '../models/User.js';
 import mongoose from 'mongoose';
 

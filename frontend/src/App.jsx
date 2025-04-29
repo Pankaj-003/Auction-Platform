@@ -14,9 +14,8 @@ import Profile from "./components/Profile";
 import Dashboard from "./components/Dashboard";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { AlertProvider } from "./components/AlertProvider";
-import { ThemeProvider } from "./context/ThemeProvider";
 import "./styles/App.css";
-import "./styles/theme.css";
+import "./styles/combined-theme.css";
 import "./styles/futuristic.css";
 
 // Protected route component
@@ -136,15 +135,13 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <ThemeProvider>
+    <BrowserRouter>
+      <AuthProvider>
         <AlertProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
+          <AppContent />
         </AlertProvider>
-      </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 };
 

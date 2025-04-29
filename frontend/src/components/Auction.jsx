@@ -7,6 +7,8 @@ import "../styles/banner.css";
 import "../styles/productSlider.css";
 import "../styles/theme.css";
 import { auctionAPI, watchlistAPI } from "../utils/apiClient";
+import { getPremiumItemsPlaceholder, getItemPlaceholder } from "../utils/imageUtils";
+import WatchlistButton from "./WatchlistButton";
 
 const Auction = () => {
   const [auctionItems, setAuctionItems] = useState([]);
@@ -350,45 +352,11 @@ const Auction = () => {
     }
   };
 
-  // Update toggleWatchlist to also use the token validation function
-  const toggleWatchlist = async (auctionId) => {
-    if (!userId) {
-      alert.warning("Please log in to add items to your watchlist");
-      return;
-    }
-
-    if (!auctionId) {
-      console.error("Error: Missing auction ID");
-      alert.error("Could not update watchlist: Invalid auction");
-      return;
-    }
-
-    try {
-      // Use the token validation function
-      const token = await ensureValidToken();
-      if (!token) return;
-      
-      if (watchlist.includes(auctionId)) {
-        // Remove from watchlist
-        await watchlistAPI.removeFromWatchlist(userId, auctionId);
-        setWatchlist(prev => prev.filter(id => id !== auctionId));
-        alert.success("Removed from watchlist");
-      } else {
-        // Add to watchlist
-        await watchlistAPI.addToWatchlist(userId, auctionId);
-        setWatchlist(prev => [...prev, auctionId]);
-        alert.success("Added to watchlist");
-      }
-    } catch (err) {
-      console.error("Watchlist Error:", err.message);
-      
-      let errorMessage = "Error updating watchlist";
-      if (err.response && err.response.data) {
-        errorMessage = `${errorMessage}: ${err.response.data.message || err.response.data.error}`;
-      }
-      
-      alert.error(errorMessage);
-    }
+  // Replace the toggleWatchlist function
+  const toggleWatchlist = (auctionId) => {
+    // This is now handled by the WatchlistButton component
+    // Leaving this here as a legacy reference
+    console.log("Watchlist toggle now handled by WatchlistButton component");
   };
 
   const handleCardClick = (auction) => setSelectedAuction(auction);
@@ -451,6 +419,53 @@ const Auction = () => {
       }
     });
 
+  // Update the auction card render code to use WatchlistButton
+  const renderAuctionCard = (auction) => {
+    return (
+      <div key={auction._id} className="auction-card">
+        <div className="auction-card-image">
+          <img
+            src={auction.image}
+            alt={auction.title}
+            onClick={() => handleCardClick(auction)}
+          />
+          <div className="auction-card-overlay">
+            <button
+              className="view-details-btn"
+              onClick={() => handleCardClick(auction)}
+            >
+              <FaRegEye /> View Details
+            </button>
+          </div>
+        </div>
+        
+        <div className="auction-card-content">
+          <h3>{auction.title}</h3>
+          <p className="auction-description">
+            {auction.description?.substring(0, 60)}
+            {auction.description?.length > 60 ? "..." : ""}
+          </p>
+          
+          <div className="auction-info">
+            <div className="price-info">
+              <p>Current Bid: <span className="price">${auction.highestBid || auction.startingBid}</span></p>
+            </div>
+            <div className="time-remaining">
+              <FaRegClock /> {countdowns[auction._id] || "Loading..."}
+            </div>
+          </div>
+          
+          <div className="auction-card-actions">
+            <Link to={`/auction/${auction._id}`} className="bid-now-btn">
+              <FaGavel /> Bid Now
+            </Link>
+            <WatchlistButton auctionId={auction._id} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Render method to show filtered auctions
   const renderAuctions = () => {
     if (loading) {
@@ -502,69 +517,7 @@ const Auction = () => {
 
     return (
       <div className="auction-grid">
-        {filteredAuctions.map((auction) => (
-          <div
-            key={auction._id}
-            className="auction-card future-card hover-lift hover-glow"
-            onClick={() => handleCardClick(auction)}
-          >
-            <div className="auction-card-badge">
-              {countdowns[auction._id] && countdowns[auction._id].includes("m") && !countdowns[auction._id].includes("d") && !countdowns[auction._id].includes("h")
-                ? <span className="ending-soon">Ending Soon!</span>
-                : null
-              }
-            </div>
-            
-            <div className="auction-card-image-container">
-              <img
-                src={auction.image || "https://via.placeholder.com/300x200?text=No+Image"}
-                alt={auction.title}
-                className="auction-card-image"
-              />
-              <button 
-                className={`wishlist-button ${watchlist.includes(auction._id) ? 'in-wishlist' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleWatchlist(auction._id);
-                }}
-              >
-                <FaHeart />
-              </button>
-            </div>
-            
-            <div className="auction-card-content">
-              <div className="auction-card-header">
-                <h3 className="auction-card-title gradient-text">{auction.title}</h3>
-                {auction.category && (
-                  <span className="auction-category future-badge">{auction.category}</span>
-                )}
-              </div>
-              
-              <div className="auction-card-details">
-                <div className="bid-info">
-                  <div className="current-bid">
-                    <span className="bid-label"><FaGavel /> Current Bid:</span>
-                    <span className="bid-amount">₹{auction.highestBid?.toLocaleString() || auction.startingBid?.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="time-remaining">
-                    <span className="time-label"><FaRegClock /></span>
-                    <span className="time-value">{countdowns[auction._id] || "Loading..."}</span>
-                  </div>
-                </div>
-                
-                <div className="auction-card-footer">
-                  <div className="bid-count">
-                    <FaRegEye /> {auction.views || 0} views
-                  </div>
-                  <button className="view-button">
-                    View Details <FaArrowRight />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+        {filteredAuctions.map((auction) => renderAuctionCard(auction))}
       </div>
     );
   };
@@ -602,12 +555,9 @@ const Auction = () => {
                 <div className="banner-particle"></div>
                 <div className="banner-particle"></div>
                 <img 
-                  src="/images/auction-hero.png" 
+                  src={getPremiumItemsPlaceholder()} 
                   alt="Featured auction item" 
                   className="banner-product"
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/500x400?text=Premium+Items";
-                  }}
                 />
               </div>
             </div>
@@ -640,7 +590,7 @@ const Auction = () => {
                           alt={item.title}
                           className="product-image"
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/300x220?text=Item";
+                            e.target.src = getItemPlaceholder();
                           }}
                         />
                         <div className="product-badge">Featured</div>

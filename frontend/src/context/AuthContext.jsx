@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { checkAuth } from '../api/auth';
+import { checkAuth as apiCheckAuth } from '../api/auth';
 
 // Create the auth context with default values
 const AuthContext = createContext({
@@ -31,11 +31,11 @@ function AuthProvider({ children }) {
         }
         
         console.log("AuthContext: Token found, validating with server");
-        const authStatus = await checkAuth();
+        const authStatus = await apiCheckAuth();
         console.log("AuthContext: Auth validation result:", authStatus);
         
-        setIsAuthenticated(authStatus.authenticated);
-        if (authStatus.authenticated && authStatus.user) {
+        setIsAuthenticated(authStatus.isAuthenticated);
+        if (authStatus.isAuthenticated && authStatus.user) {
           console.log("AuthContext: Setting user data from validation");
           setUser(authStatus.user);
         } else {

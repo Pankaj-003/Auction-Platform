@@ -6,7 +6,7 @@ const watchlistSchema = new mongoose.Schema({
     ref: "User",
     required: true
   },
-  auction: {
+  auctionId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Auction",
     required: true
@@ -18,6 +18,6 @@ const watchlistSchema = new mongoose.Schema({
 });
 
 // Compound index to prevent duplicate entries
-watchlistSchema.index({ userId: 1, auction: 1 }, { unique: true });
+watchlistSchema.index({ userId: 1, auctionId: 1 }, { unique: true });
 
 export default mongoose.model("Watchlist", watchlistSchema); 

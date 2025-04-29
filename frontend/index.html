@@ -9,8 +9,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>AuctionHub - Online Bidding Platform</title>
     <meta name="description" content="AuctionHub - A modern online auction and bidding platform">
+    <script>
+      // Apply the theme immediately to prevent flash of incorrect theme
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+          document.body.setAttribute('data-theme', savedTheme);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.body.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
-  <body>
+  <body data-theme="light">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

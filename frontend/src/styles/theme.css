@@ -7,19 +7,9 @@
   /* Theme Transition */
   --theme-transition-duration: 0.3s;
   --theme-transition-timing: ease;
+  --transition-speed: 0.3s;
   
-  /* Common Variables (shared across themes) */
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
-  --border-radius-pill: 9999px;
-  
-  --font-family-primary: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --font-family-secondary: 'Space Grotesk', 'Roboto', sans-serif;
-  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
-  /* Spacing Variables */
+  /* Spacing */
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
   --space-md: 1rem;
@@ -27,132 +17,162 @@
   --space-xl: 2rem;
   --space-2xl: 3rem;
   
-  /* Shadow Variables */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-  /* Interaction States */
+  /* Border Radius */
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-pill: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  /* Brand Colors (don't change with theme) */
+  --primary-color: #3498db;
+  --primary-hover: #2980b9;
+  --secondary-color: #f39c12;
+  --secondary-hover: #e67e22;
+  --success-color: #2ecc71;
+  --danger-color: #e74c3c;
+  --warning-color: #f1c40f;
+  --info-color: #3498db;
+  
+  /* Focus */
   --focus-ring-color: rgba(76, 201, 240, 0.5);
   --focus-ring-width: 3px;
 }
 
-/* Dark Theme (Default) */
-:root {
-  /* Core Background & Text Colors */
-  --color-bg-primary: #0A0A1B;
-  --color-bg-secondary: #10101F;
-  --color-bg-tertiary: #16162A;
-  --color-bg-elevated: #1E1E35;
-  --color-bg-overlay: rgba(10, 10, 27, 0.8);
+/* Light Theme */
+body[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #f0f0f0;
   
-  /* Text Colors */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: rgba(255, 255, 255, 0.7);
-  --color-text-tertiary: rgba(255, 255, 255, 0.5);
-  --color-text-disabled: rgba(255, 255, 255, 0.3);
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #6c757d;
   
-  /* Brand Colors */
-  --color-primary: #4CC9F0;
-  --color-primary-hover: #5ED2F3;
-  --color-primary-active: #3AB6DB;
-  --color-primary-muted: rgba(76, 201, 240, 0.2);
+  --border-color: #dee2e6;
+  --border-dark: #ced4da;
   
-  --color-secondary: #7B2CBF;
-  --color-secondary-hover: #8C3DD0;
-  --color-secondary-active: #6A1BAE;
-  --color-secondary-muted: rgba(123, 44, 191, 0.2);
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
   
-  --color-accent: #F72585;
-  --color-accent-hover: #F83694;
-  --color-accent-active: #E61476;
-  --color-accent-muted: rgba(247, 37, 133, 0.2);
+  --stats-card-bg: #ffffff;
+  --navbar-bg: #ffffff;
   
-  /* Functional Colors */
-  --color-success: #39FF14;
-  --color-warning: #FFDD00;
-  --color-danger: #FF3131;
-  --color-info: #00F5FF;
-  
-  /* Border Colors */
-  --color-border-primary: rgba(255, 255, 255, 0.1);
-  --color-border-secondary: rgba(255, 255, 255, 0.05);
-  --color-border-focus: var(--color-primary);
-  
-  /* UI Component Specific */
-  --color-input-bg: rgba(255, 255, 255, 0.07);
-  --color-input-border: rgba(255, 255, 255, 0.1);
-  --color-button-bg: var(--color-primary);
-  --color-button-text: #FFFFFF;
-  --color-card-bg: var(--color-bg-secondary);
-  --color-card-border: var(--color-border-primary);
-  
-  /* Shadows */
-  --shadow-outline: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
-  --shadow-glow: 0 0 15px rgba(76, 201, 240, 0.3);
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+  --shadow-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Light Theme */
-[data-theme="light"] {
-  /* Core Background & Text Colors */
-  --color-bg-primary: #F4F7FD;
-  --color-bg-secondary: #EDF0F7;
-  --color-bg-tertiary: #E4E8F0;
-  --color-bg-elevated: #FFFFFF;
-  --color-bg-overlay: rgba(255, 255, 255, 0.85);
+/* Dark Theme */
+body[data-theme="dark"] {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-card: #2a2a2a;
+  --bg-elevated: #3a3a3a;
   
-  /* Text Colors */
-  --color-text-primary: #121212;
-  --color-text-secondary: rgba(18, 18, 18, 0.7);
-  --color-text-tertiary: rgba(18, 18, 18, 0.5);
-  --color-text-disabled: rgba(18, 18, 18, 0.3);
+  --text-primary: #f8f9fa;
+  --text-secondary: #e2e2e2;
+  --text-muted: #b0b0b0;
   
-  /* Brand Colors - Adjusted for light theme */
-  --color-primary: #0095C8;
-  --color-primary-hover: #0085B4;
-  --color-primary-active: #00A5DA;
-  --color-primary-muted: rgba(0, 149, 200, 0.15);
+  --border-color: #444444;
+  --border-dark: #555555;
   
-  --color-secondary: #6A1BAE;
-  --color-secondary-hover: #5C109E;
-  --color-secondary-active: #7B2CBF;
-  --color-secondary-muted: rgba(106, 27, 174, 0.15);
+  --input-bg: #2c2c2c;
+  --input-border: #555555;
   
-  --color-accent: #D61B76;
-  --color-accent-hover: #C21868;
-  --color-accent-active: #E62082;
-  --color-accent-muted: rgba(214, 27, 118, 0.15);
+  --stats-card-bg: #2a2a2a;
+  --navbar-bg: #1a1a1a;
   
-  /* Functional Colors - Adjusted for light theme */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #0EA5E9;
-  
-  /* Border Colors */
-  --color-border-primary: rgba(18, 18, 18, 0.1);
-  --color-border-secondary: rgba(18, 18, 18, 0.05);
-  --color-border-focus: var(--color-primary);
-  
-  /* UI Component Specific */
-  --color-input-bg: rgba(18, 18, 18, 0.03);
-  --color-input-border: rgba(18, 18, 18, 0.1);
-  --color-button-bg: var(--color-primary);
-  --color-button-text: #FFFFFF;
-  --color-card-bg: var(--color-bg-elevated);
-  --color-card-border: var(--color-border-primary);
-  
-  /* Shadows */
-  --shadow-outline: 0 0 0 var(--focus-ring-width) rgba(0, 149, 200, 0.35);
-  --shadow-glow: 0 4px 20px rgba(0, 149, 200, 0.2);
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Global styles for dark mode */
+body[data-theme="dark"] {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Card styling for theme support */
+body[data-theme="dark"] .card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom-color: var(--border-color);
+}
+
+/* List group item styling for theme support */
+body[data-theme="dark"] .list-group-item {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Form control styling for theme support */
+body[data-theme="dark"] .form-control {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+body[data-theme="dark"] .form-control:focus {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+}
+
+/* Bootstrap overrides for dark theme */
+body[data-theme="dark"] .btn-dark {
+  background-color: #343a40;
+  border-color: #23272b;
+}
+
+body[data-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Add smooth transitions for theme switching */
+body, 
+.card,
+.form-control,
+.list-group-item,
+.btn {
+  transition: 
+    background-color var(--transition-speed), 
+    color var(--transition-speed), 
+    border-color var(--transition-speed);
+}
+
+/* Theme Toggle Styles */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px var(--shadow-color);
+  z-index: 999;
+  border: none;
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  background-color: var(--primary-hover);
 }
 
 /* Theme-aware elements with transitions */
@@ -173,74 +193,6 @@ button,
     color var(--theme-transition-duration) var(--theme-transition-timing),
     border-color var(--theme-transition-duration) var(--theme-transition-timing),
     box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
-}
-
-/* Theme Toggle Styles */
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-primary);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: var(--z-fixed);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.theme-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-glow);
-}
-
-.theme-toggle svg {
-  width: 24px;
-  height: 24px;
-  transition: transform 0.5s ease;
-}
-
-.theme-toggle:hover svg {
-  transform: rotate(30deg);
-}
-
-/* Light theme icon shows in dark mode */
-[data-theme="dark"] .theme-toggle .light-icon {
-  display: block;
-}
-
-[data-theme="dark"] .theme-toggle .dark-icon {
-  display: none;
-}
-
-/* Dark theme icon shows in light mode */
-[data-theme="light"] .theme-toggle .dark-icon {
-  display: block;
-}
-
-[data-theme="light"] .theme-toggle .light-icon {
-  display: none;
-}
-
-/* Media Queries */
-@media (max-width: 768px) {
-  .theme-toggle {
-    width: 40px;
-    height: 40px;
-    bottom: 16px;
-    right: 16px;
-  }
-  
-  .theme-toggle svg {
-    width: 20px;
-    height: 20px;
-  }
 }
 
 /* Theme-aware component utilities */
@@ -373,4 +325,123 @@ button,
 [data-theme="light"] .winner-card,
 [data-theme="light"] .product-card {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  .theme-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Light theme (default) */
+body[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #f0f0f0;
+  
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #6c757d;
+  
+  --border-color: #dee2e6;
+  --border-dark: #ced4da;
+  
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
+  
+  --stats-card-bg: #ffffff;
+  --navbar-bg: #ffffff;
+  
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme */
+body[data-theme="dark"] {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-card: #2a2a2a;
+  --bg-elevated: #3a3a3a;
+  
+  --text-primary: #f8f9fa;
+  --text-secondary: #e2e2e2;
+  --text-muted: #b0b0b0;
+  
+  --border-color: #444444;
+  --border-dark: #555555;
+  
+  --input-bg: #2c2c2c;
+  --input-border: #555555;
+  
+  --stats-card-bg: #2a2a2a;
+  --navbar-bg: #1a1a1a;
+  
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Global styles for dark mode */
+body[data-theme="dark"] {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Card styling for theme support */
+body[data-theme="dark"] .card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom-color: var(--border-color);
+}
+
+/* List group item styling for theme support */
+body[data-theme="dark"] .list-group-item {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Form control styling for theme support */
+body[data-theme="dark"] .form-control {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+body[data-theme="dark"] .form-control:focus {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+}
+
+/* Bootstrap overrides for dark theme */
+body[data-theme="dark"] .btn-dark {
+  background-color: #343a40;
+  border-color: #23272b;
+}
+
+body[data-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Add smooth transitions for theme switching */
+body, 
+.card,
+.form-control,
+.list-group-item,
+.btn {
+  transition: 
+    background-color var(--transition-speed), 
+    color var(--transition-speed), 
+    border-color var(--transition-speed);
 } 

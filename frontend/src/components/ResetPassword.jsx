@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { FaLock, FaCheckCircle } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
@@ -91,6 +91,9 @@ const ResetPassword = () => {
 
   return (
     <div className={`auth-container ${isDark ? 'dark' : 'light'}`}>
+      <div className="particle"></div>
+      <div className="particle"></div>
+      <div className="particle"></div>
       <div className="auth-card">
         <div className="text-center mb-4">
           <h2 className="auth-title">Reset Password</h2>

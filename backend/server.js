@@ -14,9 +14,11 @@ import userRoutes from "./routes/userRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import watchlistRoutes from "./routes/watchlistRoutes.js";
 import Auction from "./models/Auction.js";
 import Bid from "./models/Bid.js";
 import User from "./models/User.js";
+import { declareWinners } from "./models/Auction.js"; // Import the declareWinners function
 
 dotenv.config();
 const app = express();
@@ -41,9 +43,33 @@ mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
+    socketTimeoutMS: 45000, // Socket timeout
+    family: 4, // Use IPv4, skip trying IPv6
+    retryWrites: true,
+    maxPoolSize: 10, // Maintain up to 10 socket connections
   })
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+
+// Add MongoDB connection monitoring 
+mongoose.connection.on('disconnected', () => {
+  console.log('❌ MongoDB disconnected');
+  // Attempt to reconnect
+  mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
+    family: 4,
+    retryWrites: true,
+    maxPoolSize: 10,
+  }).catch(err => console.error('Failed to reconnect to MongoDB:', err));
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -53,6 +79,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/watchlist", watchlistRoutes);
 
 // Serve uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -117,28 +144,86 @@ app.get("/api/user/:id", async (req, res) => {
   }
 });
 
+// Admin route to fix auctions with missing seller field
+app.get("/api/admin/fix-auctions", async (req, res) => {
+  try {
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Database not connected' 
+      });
+    }
+    
+    // Find an admin user to set as default seller
+    let defaultSeller = await User.findOne({ role: 'admin' });
+    
+    // If no admin user is found, use the first user available
+    if (!defaultSeller) {
+      defaultSeller = await User.findOne();
+      
+      if (!defaultSeller) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'No users found to use as default seller' 
+        });
+      }
+    }
+
+    // Find all auctions without a seller
+    const auctionsQuery = { seller: { $exists: false } };
+    const auctionsCount = await Auction.countDocuments(auctionsQuery);
+    
+    if (auctionsCount === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'No auctions need fixing',
+        fixedCount: 0
+      });
+    }
+
+    // Update all auctions without a seller
+    const result = await Auction.updateMany(
+      auctionsQuery,
+      { $set: { seller: defaultSeller._id } }
+    );
+
+    return res.json({ 
+      success: true, 
+      message: `Fixed ${result.modifiedCount} auctions by setting default seller`,
+      seller: {
+        id: defaultSeller._id,
+        name: defaultSeller.name || defaultSeller.email
+      },
+      fixedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Error fixing auctions:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while fixing auctions',
+      error: error.message
+    });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
-// Auto declare winner every 1 minute
+// Auto declare winner every 1 minute using the imported declareWinners function
 setInterval(async () => {
   try {
-    const endedAuctions = await Auction.find({ endTime: { $lt: new Date() }, winner: null });
-
-    for (const auction of endedAuctions) {
-      // Get highest bid
-      const highestBid = await Bid.findOne({ auctionId: auction._id }).sort({ amount: -1 });
-
-      if (highestBid) {
-        auction.winner = highestBid.userId; // Save userId as winner
-        await auction.save();
-
-        console.log(`🏆 Winner declared for auction "${auction.title}"`);
-      }
+    // Check if database is connected first
+    if (mongoose.connection.readyState !== 1) {
+      console.log('⚠️ Database not connected, skipping winner declaration');
+      return;
     }
+    
+    // Call the declareWinners function
+    await declareWinners();
   } catch (error) {
     console.error("❌ Error declaring winners:", error);
   }

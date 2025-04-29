@@ -39,9 +39,13 @@ const declareWinners = async () => {
 
     for (const auction of auctions) {
       if (auction.highestBidder) {
-        auction.winner = auction.highestBidder;  // Set highest bidder as the winner
-        await auction.save();
-        console.log(`Winner declared for auction: ${auction._id}`);
+        try {
+          // Use findByIdAndUpdate instead of save() to bypass validation issues with missing seller
+          await Auction.findByIdAndUpdate(auction._id, { winner: auction.highestBidder });
+          console.log(`Winner declared for auction: ${auction.title || auction._id}`);
+        } catch (saveError) {
+          console.error(`Error saving auction ${auction._id}:`, saveError);
+        }
       }
     }
   } catch (error) {
@@ -49,8 +53,8 @@ const declareWinners = async () => {
   }
 };
 
-// Call declareWinners function every 1 minute (60000ms)
-setInterval(declareWinners, 60000);  // Check for ended auctions every 1 minute
+// NOTE: We don't start the interval here anymore to prevent multiple timers
+// This should be called from server.js instead
 
 // Export the Auction model and declareWinners function
 export default Auction;

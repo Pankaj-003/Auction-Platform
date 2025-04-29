@@ -4,6 +4,8 @@ import ForgotPassword from "./ForgotPassword";
 import { FaEnvelope, FaLock, FaSignInAlt } from "react-icons/fa";
 import { login } from "../api/auth";
 import { AuthContext } from "../context/AuthContext";
+import "../styles/auth.css";
+import { useTheme } from "../context/ThemeProvider";
 
 const Signin = ({ presetRole = "" }) => {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ const Signin = ({ presetRole = "" }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Check if already logged in
   useEffect(() => {
@@ -115,99 +119,96 @@ const Signin = ({ presetRole = "" }) => {
   };
 
   if (showForgotPassword) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(135deg, #222831 0%, #393E46 100%)" }}>
-        <div className="card p-4 shadow-lg" style={{ width: "400px", borderRadius: "15px", border: "none" }}>
-          <button
-            className="btn btn-link text-start p-0 mb-3 text-decoration-none"
-            style={{ color: "#00ADB5" }}
-            onClick={() => setShowForgotPassword(false)}
-          >
-            ← Back to Sign In
-          </button>
-          <ForgotPassword />
-        </div>
-      </div>
-    );
+    return <ForgotPassword onBack={() => setShowForgotPassword(false)} />;
   }
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(135deg, #222831 0%, #393E46 100%)" }}>
-      <div className="card p-4 shadow-lg" style={{ width: "400px", borderRadius: "15px", border: "none" }}>
-        <h2 className="text-center mb-4" style={{ color: "#00ADB5" }}>
-          <FaSignInAlt className="me-2" />
-          {presetRole ? `${presetRole.charAt(0).toUpperCase() + presetRole.slice(1)} Login` : "Sign In"}
-        </h2>
+    <div className={`auth-container ${isDark ? 'dark' : 'light'}`}>
+      <div className="particle"></div>
+      <div className="particle"></div>
+      <div className="particle"></div>
+      <div className="auth-card">
+        <div className="text-center mb-4">
+          <h2 className="auth-title">
+            {presetRole ? `${presetRole.charAt(0).toUpperCase() + presetRole.slice(1)} Login` : "Sign In"}
+          </h2>
+          <p className="auth-subtitle">Welcome back to AuctionHub</p>
+        </div>
 
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <div className="error-message">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSignin}>
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label d-flex align-items-center">
-              <FaEnvelope className="me-2" />
-              Email
-            </label>
-            <input
-              type="email"
-              className="form-control"
-              id="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+          <div className="form-group">
+            <div className="input-group">
+              <span className="input-group-icon">
+                <FaEnvelope />
+              </span>
+              <input
+                type="email"
+                className="auth-input"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label d-flex align-items-center">
-              <FaLock className="me-2" />
-              Password
-            </label>
-            <input
-              type="password"
-              className="form-control"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <div className="form-group">
+            <div className="input-group">
+              <span className="input-group-icon">
+                <FaLock />
+              </span>
+              <input
+                type="password"
+                className="auth-input"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-link p-0 mb-3"
-            onClick={() => setShowForgotPassword(true)}
-            style={{ color: "#00ADB5" }}
-          >
-            Forgot password?
-          </button>
+          <div className="text-end mb-3">
+            <button
+              type="button"
+              className="auth-link"
+              onClick={() => setShowForgotPassword(true)}
+            >
+              Forgot password?
+            </button>
+          </div>
 
           <button
             type="submit"
-            className="btn btn-primary w-100 mb-3"
-            style={{ backgroundColor: "#00ADB5", borderColor: "#00ADB5" }}
+            className="auth-button"
             disabled={loading}
           >
             {loading ? (
-              <span>
+              <>
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 Signing in...
-              </span>
+              </>
             ) : (
-              "Sign In"
+              <>
+                <FaSignInAlt className="me-2" />
+                Sign In
+              </>
             )}
           </button>
 
-          <div className="text-center">
-            <span>Don't have an account? </span>
-            <Link to="/signup" style={{ color: "#00ADB5" }}>
-              Sign up
-            </Link>
+          <div className="text-center mt-3">
+            <p className="alternate-action">
+              Don't have an account?{" "}
+              <Link to="/signup" className="auth-link">
+                Sign Up
+              </Link>
+            </p>
           </div>
         </form>
       </div>
